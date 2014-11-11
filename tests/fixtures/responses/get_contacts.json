@@ -1,0 +1,1467 @@
+{
+  "Response": {
+    "$": {
+      "xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+      "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"
+    },
+    "Id": "f07b80c0-4a18-4af3-aeb8-e447762662c9",
+    "Status": "OK",
+    "ProviderName": "Xero API Previewer",
+    "DateTimeUTC": "2014-11-11T03:36:13.0976821Z",
+    "Contacts": {
+      "Contact": [{
+        "ContactID": "f1d403d1-7d30-46c2-a2be-fc2bb29bd295",
+        "ContactStatus": "ACTIVE",
+        "Name": "24 Locks",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.217",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "c0a64e06-4d52-4d8c-bbb8-f34eb4089546",
+        "ContactStatus": "ACTIVE",
+        "Name": "7-Eleven",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.293",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "baf81bcb-eebf-4b8a-977d-95b11f593800",
+        "ContactStatus": "ACTIVE",
+        "Name": "Berry Brew",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.59",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "ae136984-5d9a-4025-a045-bf4dc42730ea",
+        "ContactStatus": "ACTIVE",
+        "Name": "Brunswick Petals",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.62",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "b10e50e4-53cf-4655-bd20-eb8c4b780f68",
+        "ContactStatus": "ACTIVE",
+        "Name": "Coco Cafe",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.793",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "c37099f9-b207-4c0a-84de-a635eea70167",
+        "ContactStatus": "ACTIVE",
+        "Name": "Espresso 31",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.823",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "779a7956-6600-444e-90fd-860eaa30901c",
+        "ContactStatus": "ACTIVE",
+        "Name": "Fulton Airport Parking",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.84",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "add5b147-1013-4737-9641-7813d91b7fa9",
+        "ContactStatus": "ACTIVE",
+        "Name": "Gable Print",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.853",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "8c555bc8-8098-43cd-bfa1-acd5573db5d6",
+        "ContactStatus": "ACTIVE",
+        "Name": "Melrose Parking",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.947",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "873c07a8-511a-420d-a664-a01a50834730",
+        "ContactStatus": "ACTIVE",
+        "Name": "Office Supplies Company",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:39.98",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "2b6d2035-ded0-45a7-b2ad-4b01c788eaef",
+        "ContactStatus": "ACTIVE",
+        "Name": "Ridgeway Bank",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:40.103",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "3987133b-4faa-4fa5-b703-d0cafb3f7177",
+        "ContactStatus": "ACTIVE",
+        "Name": "Swanston Security",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "112113",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:40.167",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "59.54",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "16b4cdc2-b36a-4b25-b9c8-7a50c17b10ba",
+        "ContactStatus": "ACTIVE",
+        "Name": "Truxton Property Management",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "9157357",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:40.183",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "2a7f9bc5-d0fe-40bf-834d-6c7be44307e7",
+        "ContactStatus": "ACTIVE",
+        "Name": "Woolworths Market",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:40.197",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "40c72a58-0a4a-4eae-a622-f3549405e2df",
+        "ContactStatus": "ACTIVE",
+        "Name": "Xero",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "9376",
+            "PhoneAreaCode": "438",
+            "PhoneCountryCode": "0800"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-10-28T04:55:40.213",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "56.35",
+            "Overdue": "56.35"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "6170fb21-2766-4af9-81e5-0d73f5243c23",
+        "ContactStatus": "ACTIVE",
+        "Name": "Petrie McLoud Watson & Associates",
+        "FirstName": "Morris",
+        "LastName": "McKenzie",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "4561",
+            "PhoneAreaCode": "915",
+            "PhoneCountryCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-01T00:46:05.25",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "b319b3b5-373b-4f3a-874f-2c9acd3e5f8d",
+        "ContactStatus": "ACTIVE",
+        "Name": "Boom FM",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX",
+            "AttentionTo": "Human Resources Manager"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "9191",
+            "PhoneAreaCode": "555",
+            "PhoneCountryCode": "01"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-01T00:46:05.28",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "a8cb2a69-f2f4-4eb6-a240-ff51ee93dd74",
+        "ContactStatus": "ACTIVE",
+        "Name": "Bank West",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "2023456",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-01T00:46:05.36",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "1d8e804c-c2e7-44fe-9606-2517de3c6441",
+        "ContactStatus": "ACTIVE",
+        "Name": "City Agency",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "9173555",
+            "PhoneAreaCode": "01"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-01T00:46:05.407",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "b24c9042-f610-451e-b317-1a8d5712602f",
+        "ContactStatus": "ACTIVE",
+        "Name": "Gateway Motors",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "349227",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-09T02:00:07.333",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "e884b133-0d53-4883-ae8e-eabe4afc7350",
+        "ContactStatus": "ACTIVE",
+        "Name": "Central Copiers",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "244844",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-09T02:00:07.397",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "163.56",
+            "Overdue": "163.56"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "f8a34028-83c6-4cc2-91ed-bada1ba04ff5",
+        "ContactStatus": "ACTIVE",
+        "Name": "MCO Cleaning Services",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "5119119",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-09T02:00:07.427",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "a1eaf3b8-91dd-4bcb-9393-aee19fe70189",
+        "ContactStatus": "ACTIVE",
+        "Name": "SMART Agency",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "9159889",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-09T02:00:07.473",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "4500.00",
+            "Overdue": "4500.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "19ca28fa-75ac-4994-b479-7c2ec9348c74",
+        "ContactStatus": "ACTIVE",
+        "Name": "PC Complete",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "322600",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-09T02:00:07.507",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "c5f9cb5b-2125-4e70-b83e-beac7d9cc6b2",
+        "ContactStatus": "ACTIVE",
+        "Name": "Hoyt Productions",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "7411234",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-09T02:00:07.537",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "aa5b440f-ac5f-426b-9437-1ab0ec8a24f3",
+        "ContactStatus": "ACTIVE",
+        "Name": "Carlton Functions",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "9179945",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-09T02:00:07.567",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "2e29540e-1a00-4c23-bbc9-f4db029c7586",
+        "ContactStatus": "ACTIVE",
+        "Name": "Bayside Wholesale",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "55669",
+            "PhoneAreaCode": "850"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-09T02:00:07.71",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "840.00",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "0e0639b6-0153-4cf1-8dcd-5da1a6cb4d62",
+        "ContactStatus": "ACTIVE",
+        "Name": "Rex Media Group",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "4546789",
+            "PhoneAreaCode": "01"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-10T23:52:34.47",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "85fc5d12-c655-4587-91b4-b5bb77243bab",
+        "ContactStatus": "ACTIVE",
+        "Name": "Port & Philip Freight",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX",
+            "AttentionTo": "Corporate Services"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "2323434",
+            "PhoneAreaCode": "01"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-10T23:52:34.547",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "4edc4b51-91eb-468c-aea8-a8a0cb6c9545",
+        "ContactStatus": "ACTIVE",
+        "Name": "Young Bros Transport",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "3435678",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-10T23:52:34.64",
+        "IsSupplier": "true",
+        "IsCustomer": "true",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "125.03",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "8696589a-a719-463b-8ff3-b58e0a08ab28",
+        "ContactStatus": "ACTIVE",
+        "Name": "Hamilton Smith Ltd",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "2345678",
+            "PhoneAreaCode": "01"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-10T23:52:34.687",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "342a5560-dbb7-408f-835b-d93d49511d6d",
+        "ContactStatus": "ACTIVE",
+        "Name": "DIISR - Small Business Services",
+        "EmailAddress": "cad@diisr.govt",
+        "SkypeUserName": "maggie-diisr",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX",
+            "AddressLine1": "GPO 9566",
+            "City": "Pinehaven",
+            "PostalCode": "9862",
+            "AttentionTo": "Corporate Accounting"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "8009001",
+            "PhoneAreaCode": "01"
+          }, {
+            "PhoneType": "FAX",
+            "PhoneNumber": "8009002",
+            "PhoneAreaCode": "01"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-10T23:52:34.813",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "270.63",
+            "Overdue": "270.63"
+          },
+          "AccountsPayable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "f4bcc6c9-d955-4466-a54d-92bd02039a3c",
+        "ContactStatus": "ACTIVE",
+        "Name": "Arabica Cafe",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-11T01:58:41.75",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "DefaultCurrency": "NZD",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "0af90bb3-9ad0-49b2-a884-2c565c16078d",
+        "ContactStatus": "ACTIVE",
+        "Name": "Net Connect",
+        "BankAccountDetails": "23-4567-890123-45",
+        "TaxNumber": "15% GST on Expenses",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX",
+            "AddressLine1": "P O Box 7900",
+            "AddressLine2": "South Mailing Centre",
+            "City": "Oaktown",
+            "PostalCode": "1236"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "500998",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "FAX",
+            "PhoneNumber": "500999",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-11T02:58:49.75",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "54.13",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "6f57ea79-6d24-4a5b-8742-6f00662740dd",
+        "ContactStatus": "ACTIVE",
+        "Name": "Capital Cab Co",
+        "BankAccountDetails": "12-3456-789012-34",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "235689",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-11T02:59:24.243",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "242.00",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "9b9ba9e5-e907-4b4e-8210-54d82b0aa479",
+        "ContactStatus": "ACTIVE",
+        "Name": "PowerDirect",
+        "BankAccountDetails": "34-5678-901234-56",
+        "TaxNumber": "15% GST on Expenses",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX",
+            "AddressLine1": "P O Box 8900",
+            "AddressLine2": "Central Mailing Centre",
+            "City": "Oaktown",
+            "PostalCode": "1288"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "887612",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "FAX",
+            "PhoneNumber": "887613",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-11T03:00:08.957",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "DefaultCurrency": "NZD",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "108.60",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "bde095a6-1c01-4e1d-b6f4-9190cfe89a9c",
+        "ContactStatus": "ACTIVE",
+        "Name": "ABC Furniture",
+        "FirstName": "Trish",
+        "LastName": "Rawlings",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "124578",
+            "PhoneAreaCode": "800"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-11T08:15:20.207",
+        "IsSupplier": "true",
+        "IsCustomer": "false",
+        "DefaultCurrency": "NZD",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "1150.00",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "9954ba5c-0451-43b0-a9ea-89612622fe3f",
+        "ContactStatus": "ACTIVE",
+        "Name": "Dimples Warehouse",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-11T08:17:59.673",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "DefaultCurrency": "NZD",
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "e1120641-c8d5-4e51-962c-52d1d1086a92",
+        "ContactStatus": "ACTIVE",
+        "Name": "Basket Case",
+        "FirstName": "Mary",
+        "LastName": "Munn",
+        "EmailAddress": "shop@basketcase.co",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX",
+            "AddressLine1": "Shop 14 Ridgeway Mall",
+            "AddressLine2": "500 River Road",
+            "City": "Pinehaven",
+            "PostalCode": "9877"
+          }, {
+            "AddressType": "STREET",
+            "AddressLine1": "10 Holland Street",
+            "AddressLine2": "Te Aro",
+            "City": "Wellington",
+            "PostalCode": "6011",
+            "Country": "New Zealand"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "9176665",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE",
+            "PhoneNumber": "7773001",
+            "PhoneAreaCode": "01"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-11T20:23:47.21",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "914.55",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "16c56769-c3c8-4dad-bd40-523f83bfe017",
+        "ContactStatus": "ACTIVE",
+        "Name": "Bayside Club",
+        "FirstName": "Bob",
+        "LastName": "Partridge",
+        "EmailAddress": "secretarybob@bsclub.co",
+        "SkypeUserName": "bayside577",
+        "BankAccountDetails": "98-0918-03451237-00",
+        "TaxNumber": "90-987-789",
+        "AccountsReceivableTaxType": "OUTPUT2",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET",
+            "AddressLine1": "148 Bay Harbour Road",
+            "City": "Ridge Heights",
+            "Region": "Madeupville",
+            "PostalCode": "6001",
+            "Country": "New Zealand",
+            "AttentionTo": "Club Secretary"
+          }, {
+            "AddressType": "POBOX",
+            "AddressLine1": "P O Box 3354",
+            "AddressLine2": "South Mailing Centre",
+            "City": "Ridge Heights",
+            "Region": "Madeupville",
+            "PostalCode": "6001",
+            "Country": "New Zealand",
+            "AttentionTo": "Club Secretary"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI",
+            "PhoneNumber": "2024418",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "2024455",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX",
+            "PhoneNumber": "2025566",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "MOBILE",
+            "PhoneNumber": "7774455",
+            "PhoneAreaCode": "01"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-11T23:26:54.227",
+        "IsSupplier": "true",
+        "IsCustomer": "true",
+        "DefaultCurrency": "NZD",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "234.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "130.00",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "46aa21e5-da3d-4e09-a5c5-9e5f3c996ad7",
+        "ContactStatus": "ACTIVE",
+        "Name": "City Limousines",
+        "FirstName": "Martin",
+        "LastName": "Dale",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "POBOX",
+            "AttentionTo": "Accounts Dept"
+          }, {
+            "AddressType": "STREET"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "8004001",
+            "PhoneAreaCode": "01"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE",
+            "PhoneNumber": "7774001",
+            "PhoneAreaCode": "01"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-14T01:18:22.543",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "1169.95",
+            "Overdue": "519.95"
+          },
+          "AccountsPayable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "fef6755f-549b-4617-b1e9-60bdffb517d8",
+        "ContactStatus": "ACTIVE",
+        "Name": "Ridgeway University",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX",
+            "AttentionTo": "Accounts Dept"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "8005001",
+            "PhoneAreaCode": "01"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE",
+            "PhoneNumber": "7775001",
+            "PhoneAreaCode": "01"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-14T01:18:23.12",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "DefaultCurrency": "NZD",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "6187.50",
+            "Overdue": "6187.50"
+          },
+          "AccountsPayable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "8a8fb8ad-e6ff-4c3e-b871-515124e40840",
+        "ContactStatus": "ACTIVE",
+        "Name": "Marine Systems",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX",
+            "AttentionTo": "Accounts Dept"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT",
+            "PhoneNumber": "9786456",
+            "PhoneAreaCode": "02"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-14T01:18:23.493",
+        "IsSupplier": "false",
+        "IsCustomer": "true",
+        "Balances": {
+          "AccountsReceivable": {
+            "Outstanding": "396.00",
+            "Overdue": "0.00"
+          },
+          "AccountsPayable": {
+            "Outstanding": "0.00",
+            "Overdue": "0.00"
+          }
+        },
+        "HasAttachments": "false"
+      }, {
+        "ContactID": "6d42f03b-181f-43e3-93fb-2025c012de92",
+        "ContactStatus": "ACTIVE",
+        "Name": "Wilson Periodicals",
+        "Addresses": {
+          "Address": [{
+            "AddressType": "STREET"
+          }, {
+            "AddressType": "POBOX"
+          }]
+        },
+        "Phones": {
+          "Phone": [{
+            "PhoneType": "DDI"
+          }, {
+            "PhoneType": "DEFAULT"
+          }, {
+            "PhoneType": "FAX"
+          }, {
+            "PhoneType": "MOBILE"
+          }]
+        },
+        "UpdatedDateUTC": "2014-11-27T01:39:25.62",
+        "IsSupplier": "false",
+        "IsCustomer": "false",
+        "DefaultCurrency": "NZD",
+        "HasAttachments": "false"
+      }]
+    }
+  }
+}

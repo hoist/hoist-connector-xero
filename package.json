@@ -29,5 +29,11 @@
     "sinon": "^1.10.3",
     "sinon-chai": "^2.5.0"
   },
-  "homepage": "https://github.com/hoist/hoist-connector-xero"
+  "homepage": "https://github.com/hoist/hoist-connector-xero",
+  "dependencies": {
+    "bluebird": "^2.3.11",
+    "lodash": "^2.4.1",
+    "xml2js": "^0.4.4",
+    "oauth": "git://github.com/hoist/node-oauth"
+  }
 }
