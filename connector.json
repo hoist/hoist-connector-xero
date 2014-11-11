@@ -1,0 +1,9 @@
+{
+  "endpoints": [{
+    "url": "/contacts",
+    "events": [
+      "xero:contact:new"
+    ],
+    "scope": "application"
+  }]
+}
