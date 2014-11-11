@@ -1,4 +1,12 @@
 {
+  "name": "Xero",
+  "url": "http://www.xero.com",
+  "auth_types": ["Private", "Public", "Partner"],
+  "settings": [{
+    "key": "",
+    "description": "",
+    "for_types": ["Private"]
+  }]
   "endpoints": [{
     "url": "/contacts",
     "events": [
