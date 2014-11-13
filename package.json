@@ -32,8 +32,9 @@
   "homepage": "https://github.com/hoist/hoist-connector-xero",
   "dependencies": {
     "bluebird": "^2.3.11",
+    "hoist-logger": "git://github.com/hoist/hoist-logger",
     "lodash": "^2.4.1",
-    "xml2js": "^0.4.4",
-    "oauth": "git://github.com/hoist/node-oauth"
+    "oauth": "git://github.com/hoist/node-oauth",
+    "xml2js": "^0.4.4"
   }
 }
