@@ -13,7 +13,8 @@ describe('XeroConnector', function () {
       privateKey: 'privateKey',
       publicKey: 'publicKey',
       consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',
-      consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38'
+      consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
+      authType: 'Private'
     });
   });
   describe('#get', function () {
@@ -76,7 +77,8 @@ describe('XeroConnector', function () {
           privateKey: 'privateKey',
           publicKey: 'publicKey',
           consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',
-          consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38'
+          consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
+          authType: 'Private'
         });
         return (result = connector.request('GET', '/contacts'));
       });
@@ -94,7 +96,7 @@ describe('XeroConnector', function () {
               key: 'name'
             }
           });
-      });    
+      });
     });
     describe('with PUT', function () {
       var result;
@@ -106,7 +108,8 @@ describe('XeroConnector', function () {
           privateKey: 'privateKey',
           publicKey: 'publicKey',
           consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',
-          consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38'
+          consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
+          authType: 'Private'
         });
         return (result = connector.request('PUT', '/contacts', data));
       });
@@ -115,7 +118,9 @@ describe('XeroConnector', function () {
       });
       it('calls underlying auth library', function () {
         return expect(OAuth.prototype._performSecureRequest)
-          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'PUT', 'https://api.xero.com/api.xro/2.0/contacts', null, {xml:data}, 'application/x-www-form-urlencoded');
+          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'PUT', 'https://api.xero.com/api.xro/2.0/contacts', null, {
+            xml: data
+          }, 'application/x-www-form-urlencoded');
       });
       it('returns json', function () {
         return expect(result)
@@ -136,7 +141,8 @@ describe('XeroConnector', function () {
           privateKey: 'privateKey',
           publicKey: 'publicKey',
           consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',
-          consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38'
+          consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
+          authType: 'Private'
         });
         return (result = connector.request('POST', '/contacts', data));
       });
@@ -145,7 +151,9 @@ describe('XeroConnector', function () {
       });
       it('calls underlying auth library', function () {
         return expect(OAuth.prototype._performSecureRequest)
-          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'POST', 'https://api.xero.com/api.xro/2.0/contacts', null, {xml:data}, 'application/x-www-form-urlencoded');
+          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'POST', 'https://api.xero.com/api.xro/2.0/contacts', null, {
+            xml: data
+          }, 'application/x-www-form-urlencoded');
       });
       it('returns json', function () {
         return expect(result)
