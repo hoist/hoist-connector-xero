@@ -1,20 +1,20 @@
 {
   "name": "Xero",
-  "slug" : "xero",  
+  "slug" : "xero",
   "url": "http://www.xero.com",
   "auth_types" : {
     "Private": {
       "setup_help": "#Adding a Private Xero Connector\n1. Log in to [https://api.xero.com/](https://api.xero.com/)\n2. Click the *'My Applications'* tab\n3. Select *'Private - just for use with my own organisation'*\n4. Copy and paste the certificate here into the box *'X509 Public Key Certificate'*\n5. Click *'Save'*\n6. When it successfully saves the certificate, it will return a page with 'OAuth Credentials' on the right. Copy both *'Consumer Key'* and *'Consumer Secret'* into the boxes on this page.\nClick *'Save and Verify'*"
-    }, 
+    },
     "Public": {
       "setup_help": "#Adding a Public Xero Connector\n1. Log in to [https://api.xero.com/](https://api.xero.com/)\n2. Click the *'My Applications'* tab\n3. Select *'Private - just for use with my own organisation'*\n4. Copy and paste the certificate here into the box *'X509 Public Key Certificate'*\n5. Click *'Save'*\n6. When it successfully saves the certificate, it will return a page with 'OAuth Credentials' on the right. Copy both *'Consumer Key'* and *'Consumer Secret'* into the boxes on this page.\nClick *'Save and Verify'*"
-    }, 
+    },
    "Partner": {
       "setup_help": "#Adding a Partner Xero Connector\n1. Log in to [https://api.xero.com/](https://api.xero.com/)\n2. Click the *'My Applications'* tab\n3. Select *'Private - just for use with my own organisation'*\n4. Copy and paste the certificate here into the box *'X509 Public Key Certificate'*\n5. Click *'Save'*\n6. When it successfully saves the certificate, it will return a page with 'OAuth Credentials' on the right. Copy both *'Consumer Key'* and *'Consumer Secret'* into the boxes on this page.\nClick *'Save and Verify'*"
     }
   },
   "settings": [{
-    "key": "consumerToken",
+    "key": "consumerKey",
     "type" : "text",
     "description": "Consumer Token",
     "for_types": ["Private", "Public"]
@@ -33,7 +33,7 @@
     "gettingStarted" : "./samples/getting-started.js"
   },
   "endpoints" : {
-    "/customers" : {  
+    "/customers" : {
       "sample" : "./samples/getting-started.js",
       "docs" : "http://api.xero.com/customers",
       "events" : {
