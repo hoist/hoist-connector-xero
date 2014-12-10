@@ -165,4 +165,35 @@ describe('XeroConnector', function () {
       });
     });
   });
+  describe('setup', function() {
+    describe('generating defaults', function() {
+      describe('Private connector', function() {
+        var settings;
+        before(function (done) {
+          XeroConnector.defaultSettings('Private')
+            .then(function(_settings) {
+              settings = _settings;
+              done();
+            });
+        });
+        it('returns a public key', function () {
+          return expect(settings)
+            .to.have.property('publicKey');
+        });
+      })
+      describe('Public connector', function() {
+        var settings;
+        before(function (done) {
+          XeroConnector.defaultSettings('Public')
+            .then(function(_settings) {
+              settings = _settings;
+              done();
+            });
+        });
+        it('returns an empty object', function () {
+          return expect(settings).to.not.have.property('publicKey');
+        });
+      })
+    });
+  });
 });

@@ -34,7 +34,9 @@
     "bluebird": "^2.3.11",
     "hoist-logger": "git://github.com/hoist/hoist-logger",
     "lodash": "^2.4.1",
+    "node-uuid": "^1.4.2",
     "oauth": "git://github.com/hoist/node-oauth",
+    "validator": "^3.22.2",
     "xml2js": "^0.4.4"
   }
 }
