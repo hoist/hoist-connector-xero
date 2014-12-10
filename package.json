@@ -36,7 +36,6 @@
     "lodash": "^2.4.1",
     "node-uuid": "^1.4.2",
     "oauth": "git://github.com/hoist/node-oauth",
-    "q": "^1.1.2",
     "validator": "^3.22.2",
     "xml2js": "^0.4.4"
   }
