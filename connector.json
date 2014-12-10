@@ -22,11 +22,16 @@
     "key": "consumerSecret",
     "type" : "text",
     "description": "Consumer Secret",
-    "for_types": ["Public", "Partner"]
+    "for_types": ["Private", "Public", "Partner"]
   },{
     "key": "publicKey",
     "type" : "longtext",
     "description": "Public Key",
+    "for_types": ["Private"]
+  },{
+    "key": "privateKey",
+    "type" : "hidden",
+    "description": "Private Key",
     "for_types": ["Private"]
   }],
   "samples" : {
