@@ -4,15 +4,15 @@
   "url": "http://www.xero.com",
   "auth_types" : {
     "Private": {
-      "setup_help": "#Adding a Private Xero Connector\n1. Log in to [https://api.xero.com/](https://api.xero.com/)\n2. Click the *'My Applications'* tab\n3. Select *'Private - just for use with my own organisation'*\n4. Copy and paste the certificate here into the box *'X509 Public Key Certificate'*\n5. Click *'Save'*\n6. When it successfully saves the certificate, it will return a page with 'OAuth Credentials' on the right. Copy both *'Consumer Key'* and *'Consumer Secret'* into the boxes on this page.\nClick *'Save and Verify'*",
+      "setup_help": "./samples/private-setup-help.md",
       "requires_signing" : false
     },
     "Public": {
-      "setup_help": "#Adding a Public Xero Connector\n1. Log in to [https://api.xero.com/](https://api.xero.com/)\n2. Click the *'My Applications'* tab\n3. Select *'Private - just for use with my own organisation'*\n4. Copy and paste the certificate here into the box *'X509 Public Key Certificate'*\n5. Click *'Save'*\n6. When it successfully saves the certificate, it will return a page with 'OAuth Credentials' on the right. Copy both *'Consumer Key'* and *'Consumer Secret'* into the boxes on this page.\nClick *'Save and Verify'*",
+      "setup_help": "./samples/public-setup-help.md",
       "requires_signing" : true
     },
    "Partner": {
-      "setup_help": "#Adding a Partner Xero Connector\n1. Log in to [https://api.xero.com/](https://api.xero.com/)\n2. Click the *'My Applications'* tab\n3. Select *'Private - just for use with my own organisation'*\n4. Copy and paste the certificate here into the box *'X509 Public Key Certificate'*\n5. Click *'Save'*\n6. When it successfully saves the certificate, it will return a page with 'OAuth Credentials' on the right. Copy both *'Consumer Key'* and *'Consumer Secret'* into the boxes on this page.\nClick *'Save and Verify'*",
+      "setup_help": "./samples/partner-setup-help.md",
       "requires_signing" : true
     }
   },
@@ -38,35 +38,109 @@
     "for_types": ["Private"]
   }],
   "samples" : {
-    "gettingStarted" : "./samples/getting-started.js"
+    "getting_started" : "./samples/getting-started.js"
   },
   "endpoints" : {
-    "/customers" : {
-      "sample" : "./samples/getting-started.js",
-      "docs" : "http://api.xero.com/customers",
-      "events" : {
-        "customer:delete" : {
-          "docs" : "http://api.xero.com/customers"
-        },
-        "customer:create" : {
-          "docs" : "http://api.xero.com/customers"
-        },
-        "customer:update" : {
-          "docs" : "http://api.xero.com/customers"
-        }
-      }
+    "Attachments" : {
+      "sample" : "./samples/endpoints/attachments.js",
+      "docs" : "https://developer.xero.com/documentation/api/attachments"
     },
-    "/clients" : {
-      "sample" : "./samples/getting-started.js",
-      "docs" : "http://api.xero.com/customers"
+    "Accounts" : {
+      "sample" : "./samples/endpoints/accounts.js",
+      "docs" : "https://developer.xero.com/documentation/api/accounts"
     },
-    "/invoices" : {
-      "sample" : "./samples/getting-started.js",
-      "docs" : "http://api.xero.com/customers"
+    "BankStatements" : {
+      "sample" : "./samples/endpoints/bankstatements.js",
+      "docs" : "https://developer.xero.com/documentation/api/bankstatements"
     },
-    "/tasks" : {
-      "sample" : "./samples/getting-started.js",
-      "docs" : "http://api.xero.com/customers"
+    "BankTransactions" : {
+      "sample" : "./samples/endpoints/banktransactions.js",
+      "docs" : "https://developer.xero.com/documentation/api/banktransactions"
+    },
+    "BankTransfers" : {
+      "sample" : "./samples/endpoints/banktransfers.js",
+      "docs" : "https://developer.xero.com/documentation/api/banktransfers"
+    },
+    "BrandingThemes" : {
+      "sample" : "./samples/endpoints/brandingthemes.js",
+      "docs" : "https://developer.xero.com/documentation/api/brandingthemes"
+    },
+    "Contacts" : {
+      "sample" : "./samples/endpoints/contacts.js",
+      "docs" : "https://developer.xero.com/documentation/api/contacts"
+    },
+    "ContactGroups" : {
+      "sample" : "./samples/endpoints/contactgroups.js",
+      "docs" : "https://developer.xero.com/documentation/api/contactgroups"
+    },
+    "CreditNotes" : {
+      "sample" : "./samples/endpoints/creditnotes.js",
+      "docs" : "https://developer.xero.com/documentation/api/creditnotes"
+    },
+    "Currencies" : {
+      "sample" : "./samples/endpoints/currencies.js",
+      "docs" : "https://developer.xero.com/documentation/api/currencies"
+    },
+    "Employees" : {
+      "sample" : "./samples/endpoints/employees.js",
+      "docs" : "https://developer.xero.com/documentation/api/employees"
+    },
+    "ExpenseClaims" : {
+      "sample" : "./samples/endpoints/expenseclaims.js",
+      "docs" : "https://developer.xero.com/documentation/api/expenseclaims"
+    },
+    "Invoices" : {
+      "sample" : "./samples/endpoints/invoices.js",
+      "docs" : "https://developer.xero.com/documentation/api/invoices"
+    },
+    "Items" : {
+      "sample" : "./samples/endpoints/items.js",
+      "docs" : "https://developer.xero.com/documentation/api/items"
+    },
+    "Journals" : {
+      "sample" : "./samples/endpoints/journals.js",
+      "docs" : "https://developer.xero.com/documentation/api/journals"
+    },
+    "ManualJournals" : {
+      "sample" : "./samples/endpoints/manualjournals.js",
+      "docs" : "https://developer.xero.com/documentation/api/manualjournals"
+    },
+    "Organisation" : {
+      "sample" : "./samples/endpoints/organisation.js",
+      "docs" : "https://developer.xero.com/documentation/api/organisation"
+    },
+    "Payments" : {
+      "sample" : "./samples/endpoints/payments.js",
+      "docs" : "https://developer.xero.com/documentation/api/payments"
+    },
+    "Receipts" : {
+      "sample" : "./samples/endpoints/receipts.js",
+      "docs" : "https://developer.xero.com/documentation/api/receipts"
+    },
+    "RepeatingInvoices" : {
+      "sample" : "./samples/endpoints/repeatinginvoices.js",
+      "docs" : "https://developer.xero.com/documentation/api/repeatinginvoices"
+    },
+    "Reports" : {
+      "sample" : "./samples/endpoints/reports.js",
+      "docs" : "https://developer.xero.com/documentation/api/reports"
+    },
+    "TaxRates" : {
+      "sample" : "./samples/endpoints/taxrates.js",
+      "docs" : "https://developer.xero.com/documentation/api/taxrates"
+    },
+    "TrackingCategories" : {
+      "sample" : "./samples/endpoints/trackingcategories.js",
+      "docs" : "https://developer.xero.com/documentation/api/trackingcategories"
+    },
+    "Types" : {
+      "sample" : "./samples/endpoints/types.js",
+      "docs" : "https://developer.xero.com/documentation/api/types"
+    },
+    "Users" : {
+      "sample" : "./samples/endpoints/users.js",
+      "docs" : "https://developer.xero.com/documentation/api/users"
     }
+    
   }
 }
