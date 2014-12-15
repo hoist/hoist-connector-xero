@@ -20,22 +20,26 @@
     "key": "consumerKey",
     "type" : "text",
     "description": "Consumer Token",
-    "for_types": ["Private", "Public"]
+    "for_types": ["Private", "Public"],
+    "required": true
   },{
     "key": "consumerSecret",
     "type" : "text",
     "description": "Consumer Secret",
-    "for_types": ["Private", "Public", "Partner"]
+    "for_types": ["Private", "Public", "Partner"],
+    "required": true
   },{
     "key": "publicKey",
     "type" : "longtext",
     "description": "Public Key",
-    "for_types": ["Private"]
+    "for_types": ["Private"],
+    "required": true
   },{
     "key": "privateKey",
     "type" : "hidden",
     "description": "Private Key",
-    "for_types": ["Private"]
+    "for_types": ["Private"],
+    "required": true
   }],
   "samples" : {
     "getting_started" : "./samples/getting-started.js"
