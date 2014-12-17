@@ -27,13 +27,16 @@
     "jshint-stylish": "^0.4.0",
     "run-sequence": "^0.3.6",
     "sinon": "^1.10.3",
-    "sinon-chai": "^2.5.0"
+    "sinon-chai": "^2.5.0",
+    "zombie": "^2.5.1"
   },
   "homepage": "https://github.com/hoist/hoist-connector-xero",
   "dependencies": {
     "bluebird": "^2.3.11",
+    "hoist-certificate-store": "git+ssh://git@github.com:hoist/hoist-certificate-store",
     "hoist-logger": "git://github.com/hoist/hoist-logger",
     "lodash": "^2.4.1",
+    "moment": "^2.8.4",
     "node-uuid": "^1.4.2",
     "oauth": "git://github.com/hoist/node-oauth",
     "validator": "^3.22.2",

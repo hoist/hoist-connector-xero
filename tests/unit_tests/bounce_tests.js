@@ -21,6 +21,9 @@ describe('Xero Connector', function () {
           });
           connector.receiveBounce(mockBounce);
         });
+        after(function () {
+          OAuth.prototype.getOAuthRequestToken.restore();
+        });
         it('redirects to xero', function () {
           expect(mockBounce.redirect)
             .to.have.been
@@ -55,6 +58,9 @@ describe('Xero Connector', function () {
             authType: 'Public'
           });
           connector.receiveBounce(mockBounce);
+        });
+        after(function () {
+          OAuth.prototype.getOAuthAccessToken.restore();
         });
         it('redirects back to app', function () {
           return expect(mockBounce.done)
