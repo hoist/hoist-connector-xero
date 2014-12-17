@@ -20,6 +20,72 @@ describe.skip('Partner Auth', function () {
   describe('initial bounce', function () {
     before(function () {
       var bounce = {
+        get: function () {
+          return undefined;
+        },
+        delete: function () {
+          return BBPromise.resolve(null);
+        },
+        set: function () {
+          console.log('set', arguments);
+          return BBPromise.resolve(null);
+        },
+        redirect: function () {
+          console.log('redirect', arguments);
+          return BBPromise.resolve(null);
+        },
+        done: function () {
+          console.log('done', arguments);
+          return BBPromise.resolve(null);
+        }
+      };
+      return connector.receiveBounce(bounce);
+    });
+    it('should do some redirect', function () {
+
+    });
+  });
+  describe('second bounce', function () {
+    before(function () {
+      var bounce = {
+        query: {
+          oauth_verifier: '8982619'
+        },
+        get: function (key) {
+          if (key === 'RequestToken') {
+            return 'JX3AIHIO7MEA7MSCEMKEXGNHW4WUDR';
+          }
+          if (key === 'RequestTokenSecret') {
+            return 'NRZH2QES6FCN0LITKXSVWFPEWTYP2Q';
+          }
+          return undefined;
+        },
+        delete: function () {
+          return BBPromise.resolve(null);
+        },
+        set: function () {
+          console.log('set', arguments);
+          return BBPromise.resolve(null);
+        },
+        redirect: function () {
+          console.log('redirect', arguments);
+          return BBPromise.resolve(null);
+        },
+        done: function () {
+          console.log('done', arguments);
+          return BBPromise.resolve(null);
+        }
+      };
+      return connector.receiveBounce(bounce).catch(function (err) {
+        console.log(err);
+      });
+    });
+    it('should do some redirect', function () {
+
+    });
+  });
+  /*  describe('get contacts', function () {
+      var bounce = {
         get: function (key) {
           if (key === 'AccessToken') {
             return 'JPPFNJF9STVLRZCEIOFJUCSARMRGIO';
@@ -51,10 +117,5 @@ describe.skip('Partner Auth', function () {
       }).catch(function (err) {
         console.log(err, err.stack);
       });
-
-    });
-    it('should do some redirect', function () {
-
-    });
-  });
+    });*/
 });
