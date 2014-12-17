@@ -3,7 +3,7 @@ var Connector = require('../../lib/connector');
 var fs = require('fs');
 var path = require('path');
 var BBPromise = require('bluebird');
-describe('Partner Auth', function () {
+describe.skip('Partner Auth', function () {
   var connector;
   before(function () {
     var privateKey = fs.readFileSync(path.resolve('/Volumes/Store/Projects/hoist/ssl/xero/hoist_xero_private_key.pem')).toString();
@@ -17,7 +17,7 @@ describe('Partner Auth', function () {
     });
   });
   this.timeout(50000);
-  describe.only('initial bounce', function () {
+  describe('initial bounce', function () {
     before(function () {
       var bounce = {
         get: function () {
