@@ -3,7 +3,7 @@ var Connector = require('../../lib/connector');
 var fs = require('fs');
 var path = require('path');
 var BBPromise = require('bluebird');
-describe.skip('Partner Auth', function () {
+describe('Partner Auth', function () {
   var connector;
   before(function () {
     var privateKey = fs.readFileSync(path.resolve('/Volumes/Store/Projects/hoist/ssl/xero/hoist_xero_private_key.pem')).toString();
@@ -17,7 +17,7 @@ describe.skip('Partner Auth', function () {
     });
   });
   this.timeout(50000);
-  describe('initial bounce', function () {
+  describe.only('initial bounce', function () {
     before(function () {
       var bounce = {
         get: function () {
@@ -49,14 +49,14 @@ describe.skip('Partner Auth', function () {
     before(function () {
       var bounce = {
         query: {
-          oauth_verifier: '8982619'
+          oauth_verifier: '1500743'
         },
         get: function (key) {
           if (key === 'RequestToken') {
-            return 'JX3AIHIO7MEA7MSCEMKEXGNHW4WUDR';
+            return '24A38953RA0DOFV58JNSQDZIZSZB9C';
           }
           if (key === 'RequestTokenSecret') {
-            return 'NRZH2QES6FCN0LITKXSVWFPEWTYP2Q';
+            return 'SGOT4TJTRFRXYEDVZKITAHNUZB2QTH';
           }
           return undefined;
         },
@@ -84,22 +84,26 @@ describe.skip('Partner Auth', function () {
 
     });
   });
-  /*  describe('get contacts', function () {
+  describe('get contacts', function () {
+    before(function () {
+
+      var auth = {
+        AccessToken: 'YDEPSYUOV9ZVCWKWS9OORH1992FEMW',
+        AccessTokenSecret: 'ZYJRYPZQ5NIJDQ1Z0VU9JTF1DKBQUN',
+        SessionHandle: 'AXI05QGE5G7TXJLXTPGL',
+        SessionExpiresAt: '2024-12-14T02:54:08.256Z',
+        TokenExpiresAt: '2014-12-17T03:24:08.255Z'
+      };
       var bounce = {
         get: function (key) {
-          if (key === 'AccessToken') {
-            return 'JPPFNJF9STVLRZCEIOFJUCSARMRGIO';
-          }
-          if (key === 'AccessTokenSecret') {
-            return 'N5SLLMLXEA04NNAAWHTY5QZR7CDGL8';
-          }
-          return undefined;
+          return auth[key];
         },
         delete: function () {
           return BBPromise.resolve(null);
         },
-        set: function () {
-          console.log('set', arguments);
+        set: function (key, value) {
+          console.log('set',arguments);
+          auth[key] = value;
           return BBPromise.resolve(null);
         },
         redirect: function () {
@@ -117,5 +121,9 @@ describe.skip('Partner Auth', function () {
       }).catch(function (err) {
         console.log(err, err.stack);
       });
-    });*/
+    });
+    it('should', function () {
+
+    });
+  });
 });
