@@ -33,8 +33,12 @@
   "homepage": "https://github.com/hoist/hoist-connector-xero",
   "dependencies": {
     "bluebird": "^2.3.11",
+    "config": "^1.10.0",
     "hoist-certificate-store": "git+ssh://git@github.com:hoist/hoist-certificate-store",
+    "hoist-errors": "git://github.com/hoist/hoist-errors",
+    "hoist-connect": "git://github.com/hoist/hoist-connect",
     "hoist-logger": "git://github.com/hoist/hoist-logger",
+    "hoist-model": "git://github.com/hoist/hoist-model",
     "lodash": "^2.4.1",
     "moment": "^2.8.4",
     "node-uuid": "^1.4.2",
