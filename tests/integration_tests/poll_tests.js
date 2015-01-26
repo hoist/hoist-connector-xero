@@ -9,6 +9,7 @@ var mongoose = BBPromise.promisifyAll(Model._mongoose);
 var moment = require('moment');
 var XeroConnector = require('../../lib/connector');
 var Authorization = require('../../lib/authorization');
+var SubscriptionController = require('../fixtures/subscription_controller');
 
 describe('Poll Integration', function () {
   before(function () {
@@ -69,7 +70,7 @@ describe('Poll Integration', function () {
               meta: {}
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = subscription[0];
+               _subscription = new SubscriptionController(subscription[0])
             }),
             new Model.Bucket({
               _id: 'bucketId',
@@ -154,7 +155,7 @@ describe('Poll Integration', function () {
               meta: {}
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = subscription[0];
+               _subscription = new SubscriptionController(subscription[0])
             }),
             new Model.BouncerToken({
               _id: 'bouncerTokenId',
