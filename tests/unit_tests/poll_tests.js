@@ -119,7 +119,7 @@ describe('Poll', function () {
             Response: {}
           }));
           authorizeStub.returns(BBPromise.resolve());
-          return new Poll(_app, _bucket, _subscription, _bouncerToken)
+          return Poll(_app, _bucket, _subscription, _conn.settings, _bouncerToken)
         });
         it('calls Connector#authorize with the bouncer token', function () {
           expect(XeroConnector.prototype.authorize)
@@ -147,7 +147,6 @@ describe('Poll', function () {
       });
       describe('with results from Xero', function () {
         before(function () {
-          console.log('then')
           getStub.onCall(0).returns(BBPromise.resolve({
             Response: {
               Invoices: {
@@ -204,7 +203,7 @@ describe('Poll', function () {
               }
             }
           }));
-          return new Poll(_app, _bucket, _subscription)
+          return  Poll(_app, _bucket, _subscription, _conn.settings)
         });
         after(function () {
           BBPromise.all([
@@ -315,7 +314,7 @@ describe('Poll', function () {
               authorizeStub.returns(BBPromise.resolve({
                 Response: {}
               }));
-              return new Poll(_app, _bucket, _subscription)
+              return Poll(_app, _bucket, _subscription, _conn.settings)
             }).catch(function (err) {
               console.log('error', err)
             });
@@ -411,7 +410,6 @@ describe('Poll', function () {
               getStub = sinon.stub(XeroConnector.prototype, 'get'),
               authorizeStub = sinon.stub(XeroConnector.prototype, 'authorize')
             ]).then(function () {
-              console.log('then')
               getStub.onCall(0).returns(BBPromise.resolve({
                 Response: {
                   Invoices: {
@@ -468,7 +466,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return new Poll(_app, _bucket, _subscription)
+             return Poll(_app, _bucket, _subscription, _conn.settings)
             }).catch(function (err) {
               console.log('error', err)
             });
