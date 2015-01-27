@@ -2,24 +2,29 @@
 var _ = require('lodash');
 
 function SubscriptionController(subscription) {
-  var privateSubscription = subscription;
   _.forOwn(subscription.toObject(), _.bind(function (n, key) {
     this[key] = n;
   }, this));
 
   this.set = function (key, value) {
-    privateSubscription.meta = privateSubscription.meta ? privateSubscription.meta : {};
-    if (typeof privateSubscription.meta[key] === 'object' && typeof value === 'object') {
-      privateSubscription.meta[key] = _.merge(privateSubscription.meta[key], value);
+    subscription.meta = subscription.meta ? subscription.meta : {};
+    if (typeof subscription.meta[key] === 'object' && typeof value === 'object') {
+      subscription.meta[key] = _.merge(subscription.meta[key], value);
     } else {
-      privateSubscription.meta[key] = value;
+      subscription.meta[key] = value;
     }
-    privateSubscription.markModified('meta');
-    return privateSubscription.saveAsync();
+    subscription.markModified('meta');
+    return subscription.saveAsync().bind(this).then(function (savedSubscription) {
+      subscription.meta = savedSubscription[0].meta;
+      return this;
+    });
   };
 
   this.get = function (key) {
-    return privateSubscription.meta[key];
+    if (!subscription.meta) {
+      return null;
+    }
+    return subscription.meta[key];
   };
 }
 module.exports = SubscriptionController;

@@ -105,8 +105,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
-              meta: {}
+              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0])
@@ -142,7 +141,6 @@ describe('Poll', function () {
         });
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
-            console.log(sub)
             expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
           })
         });
@@ -154,8 +152,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
-              meta: {}
+              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0]);
@@ -313,9 +310,7 @@ describe('Poll', function () {
           .then(function (bouncerToken) {
             _bouncerToken = bouncerToken[0];
           })
-        ]).then(function () {
-          // _momentNow = moment.utc().format()
-        }).catch(function (err) {
+        ]).catch(function (err) {
           console.log('error', err)
         });
       });
@@ -325,10 +320,7 @@ describe('Poll', function () {
           Model.BouncerToken.removeAsync({}),
           Model.Application.removeAsync({}),
           Model.Organisation.removeAsync({}),
-          Model.Bucket.removeAsync({}),
-          Model.Subscription.removeAsync({})
-          // authorizeStub.restore(),
-          // getStub.restore()
+          Model.Bucket.removeAsync({})
         ])
       });
       describe('with no results from Xero', function () {
@@ -409,8 +401,6 @@ describe('Poll', function () {
               _subscription = new SubscriptionController(subscription[0])
               sinon.stub(XeroConnector.prototype, 'get')
               sinon.stub(XeroConnector.prototype, 'authorize')
-                // return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject())
-
               XeroConnector.prototype.get.onCall(0).returns(BBPromise.resolve({
                 Response: {
                   Invoices: {
@@ -467,7 +457,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return Poll(_app, _bucket, _subscription, _conn.settings, _bouncerToken)
+              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject())
             })
         });
         after(function () {
@@ -477,7 +467,7 @@ describe('Poll', function () {
         });
         it('calls Connector#authorize with the bouncer token', function () {
           expect(XeroConnector.prototype.authorize)
-            .to.have.been.calledWith(new Authorization(_bouncerToken));
+            .to.have.been.calledWith(new Authorization(_bouncerToken.toObject()));
         });
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
@@ -569,8 +559,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
-              meta: {}
+              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0])
@@ -613,8 +602,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
-              meta: {}
+              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0])
@@ -701,6 +689,225 @@ describe('Poll', function () {
             .to.eql(_header);
           expect(XeroConnector.prototype.get.secondCall.args[1])
             .to.eql(_header);
+        });
+      });
+    });
+    describe('with a lastPolled time for each endpoint', function () {
+      var _app, _bucket, _subscription, _bouncerToken, _conn, _momentNow;
+      before(function () {
+        return BBPromise.all([
+          new Model.Organisation({
+            _id: 'orgId',
+            name: 'test org',
+            slug: 'org'
+          }).saveAsync()
+          .then(function (org) {}),
+          new Model.Application({
+            _id: 'appId',
+            organisation: 'orgId',
+            name: 'test app',
+            apiKey: 'apiKey',
+            slug: 'app',
+            maxExecutors: 1,
+            currentExecutors: 0
+          }).saveAsync()
+          .then(function (app) {
+            _app = app[0];
+          }),
+          new Model.ConnectorSetting({
+            _id: 'ConnectorSettingId',
+            settings: {
+              authType: 'Private',
+              consumerKey: 'SZ9MEML6RHTGI1DOCQUHAA8WP5K2AB',
+              consumerSecret: 'TUVSWFDU8UWQRI2HG6JCWRQRQI6TPF',
+              publicKey: "-----BEGIN CERTIFICATE-----\r\nMIIDFjCCAn+gAwIBAgIJAOpAilf4TP34MA0GCSqGSIb3DQEBCwUAMIGjMQswCQYD\r\nVQQGEwJOWjETMBEGA1UECAwKV2VsbGluZ3RvbjETMBEGA1UEBwwKV2VsbGluZ3Rv\r\nbjEOMAwGA1UECgwFSG9pc3QxHzAdBgNVBAsMFnVuZGVmaW5lZDE0MjE4MDM4NjY5\r\nOTgxEzARBgNVBAMMCmFwcC5ob2kuaW8xJDAiBgkqhkiG9w0BCQEWFXN1cHBvcnRA\r\naG9pc3RhcHBzLmNvbTAeFw0xNTAxMjEwMTMxMDdaFw0yMDAxMjAwMTMxMDdaMIGj\r\nMQswCQYDVQQGEwJOWjETMBEGA1UECAwKV2VsbGluZ3RvbjETMBEGA1UEBwwKV2Vs\r\nbGluZ3RvbjEOMAwGA1UECgwFSG9pc3QxHzAdBgNVBAsMFnVuZGVmaW5lZDE0MjE4\r\nMDM4NjY5OTgxEzARBgNVBAMMCmFwcC5ob2kuaW8xJDAiBgkqhkiG9w0BCQEWFXN1\r\ncHBvcnRAaG9pc3RhcHBzLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA\r\nzM4QuFZjKlZenK1x5vPCTrFlBk/wtsRg6CRjJOOUwevVfwZdwNd8OzoZG8u2Xwhp\r\nYGQpXxPXDbJPFthmd4+GFtCJrxhTxJFg03YgpkaKeLtafWyGxbY5tUmzQrnLQLrk\r\nZZObiSEwlYZarWF6dyomM+BJi16Jy7210SwmBYt2KgECAwEAAaNQME4wHQYDVR0O\r\nBBYEFGdi7COATWJhfyq4NqsBSgCwr1cuMB8GA1UdIwQYMBaAFGdi7COATWJhfyq4\r\nNqsBSgCwr1cuMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQELBQADgYEAvsWVF6TD\r\nU1qNCyU+EICI3JX+1YOgNFl1//QjDVmHUjPHBUVrMLoGj2rY9Nc6nKUa9Q9CeTo9\r\ncEA+1vtc15meVi7D6ZE4xCRvgl5nTo+D4Tu9hajcP44Piim9eUoesIJuDH1i7mN5\r\ns6pT3xPsFCaZZxGEvkAKq14sXQ4kJwQpNOI=\r\n-----END CERTIFICATE-----",
+              "privateKey": "-----BEGIN RSA PRIVATE KEY-----\r\nMIICXQIBAAKBgQDMzhC4VmMqVl6crXHm88JOsWUGT/C2xGDoJGMk45TB69V/Bl3A\r\n13w7Ohkby7ZfCGlgZClfE9cNsk8W2GZ3j4YW0ImvGFPEkWDTdiCmRop4u1p9bIbF\r\ntjm1SbNCuctAuuRlk5uJITCVhlqtYXp3KiYz4EmLXonLvbXRLCYFi3YqAQIDAQAB\r\nAoGBAMk/qEBraxB8RIYzDV0DpKkNOhdk0EXYXN1gfCgQlemko2spx1CqroHIikm8\r\n+N0Td/DnG5w487aaw4rQZIgR+ZCInRoUGYzQCy48qTw9vbXpLw1K3ft2gJ9z3rJK\r\nGisPUO+sYDzTHGHQETAqCMkzrt5YElS9NU394KeRPpzyOrZBAkEA9PL/VRQa2byD\r\nbEDpc+J4BB4+95mT86OurSshq0y8Y9WauaBI5ktNjiiWjYXt49T7xtzFzNEU2x4j\r\nG2/orygAeQJBANYLbZELDSKaYKG6t38FmMCY3FQufGquhXNiOYx5l0zIKCQBGwhW\r\nhwTF8075+S/lkfWW8AjJfTAnhHYH7xIXY8kCQQDqAHoMPPipqX2jnR9opaEhzgM5\r\nZm4BAw2MQPgZPWV7ukPlsUnzN10PwZaR/LAWRxGAGMidsd/KtC+1tmMDcaOBAkBa\r\nP+1N19wM+AzAhIr0SvbSVmGoOQWKsdVhBkx/l5Ec9dQ/AhxU0q8Raymg5jOUZ3a4\r\nl5DUE6juUes/HS9HcIdJAkBXGv+S2pGVB5c74GB7EX8I7EEhxycPSYvyl21sfaKi\r\nVsP29AKskt7LAgNU/t0yWQxbKWHOq7u//LqDOb6jzR6E\r\n-----END RSA PRIVATE KEY-----"
+            },
+            environment: 'test',
+            key: 'connectorKey',
+            application: 'appId',
+            name: 'connectorName'
+          }).saveAsync()
+          .then(function (conn) {
+            _conn = conn[0];
+          }),
+          new Model.Bucket({
+            _id: 'bucketId',
+            application: 'appId',
+            environment: 'test'
+          }).saveAsync()
+          .then(function (bucket) {
+            _bucket = bucket[0];
+          })
+        ]).catch(function (err) {
+          console.log('error', err)
+        });
+      });
+      after(function () {
+        BBPromise.all([
+          Model.ConnectorSetting.removeAsync({}),
+          Model.BouncerToken.removeAsync({}),
+          Model.Application.removeAsync({}),
+          Model.Organisation.removeAsync({}),
+          Model.Bucket.removeAsync({})
+        ])
+      });
+      describe('with no results from Xero', function () {
+        var _momentNow = moment.utc().format()
+        var _header = {
+          'If-Modified-Since': _momentNow
+        };
+        before(function () {
+          return new Model.Subscription({
+              _id: 'subscriptionId',
+              connector: 'connectorKey',
+              application: 'appId',
+              environment: 'test',
+              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
+              meta: {
+                Invoices: {
+                  lastPolled: _momentNow
+                }
+              }
+            }).saveAsync()
+            .then(function (subscription) {
+              _subscription = new SubscriptionController(subscription[0])
+              sinon.stub(XeroConnector.prototype, 'get').returns(BBPromise.resolve({
+                Response: {}
+              }));
+              sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
+              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings)
+            })
+        });
+        after(function () {
+          XeroConnector.prototype.authorize.restore();
+          XeroConnector.prototype.get.restore();
+          return Model.Subscription.removeAsync({});
+        });
+        it('calls Connector#get with the all the subscriptions endpoints', function () {
+          expect(XeroConnector.prototype.get.firstCall.args[0])
+            .to.eql(_subscription.endpoints[0]);
+          expect(XeroConnector.prototype.get.secondCall.args[0])
+            .to.eql(_subscription.endpoints[1]);
+          expect(XeroConnector.prototype.get.thirdCall.args[0])
+            .to.eql(_subscription.endpoints[2]);
+        });
+        it('calls Connector#get with the correct header', function () {
+          expect(XeroConnector.prototype.get.firstCall.args[1])
+            .to.eql(_header);
+          expect(XeroConnector.prototype.get.secondCall.args[1])
+            .to.eql({});
+        });
+        it('sets the lastPoll on the subscription.meta for each endpoint', function () {
+          return Model.Subscription.findOneAsync().then(function (sub) {
+            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
+          })
+        });
+      });
+      describe('with results from Xero', function () {
+        var _momentNow = moment.utc().format()
+        var _header = {
+          'If-Modified-Since': _momentNow
+        };
+        before(function () {
+          return new Model.Subscription({
+              _id: 'subscriptionId',
+              connector: 'connectorKey',
+              application: 'appId',
+              environment: 'test',
+              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
+              meta: {
+                Invoices: {
+                  lastPolled: _momentNow
+                }
+              }
+            }).saveAsync()
+            .then(function (subscription) {
+              _subscription = new SubscriptionController(subscription[0])
+              sinon.stub(XeroConnector.prototype, 'get')
+              sinon.stub(XeroConnector.prototype, 'authorize')
+              XeroConnector.prototype.get.onCall(0).returns(BBPromise.resolve({
+                Response: {
+                  Invoices: {
+                    Invoice: 'invoice'
+                  }
+                }
+              }));
+              XeroConnector.prototype.get.onCall(1).returns(BBPromise.resolve({
+                Response: {
+                  Contacts: {
+                    Contact: 'contact'
+                  }
+                }
+              }));
+              XeroConnector.prototype.get.onCall(2).returns(BBPromise.resolve({
+                Response: {
+                  Users: {
+                    User: 'user'
+                  }
+                }
+              }));
+              XeroConnector.prototype.get.onCall(3).returns(BBPromise.resolve({
+                Response: {
+                  Payments: {
+                    Payment: 'payment'
+                  }
+                }
+              }));
+              XeroConnector.prototype.get.onCall(4).returns(BBPromise.resolve({
+                Response: {
+                  Payments: {
+                    Payment: 'payment'
+                  }
+                }
+              }));
+              XeroConnector.prototype.get.onCall(5).returns(BBPromise.resolve({
+                Response: {
+                  Payments: {
+                    Payment: 'payment'
+                  }
+                }
+              }));
+              XeroConnector.prototype.get.onCall(6).returns(BBPromise.resolve({
+                Response: {
+                  Payments: {
+                    Payment: 'payment'
+                  }
+                }
+              }));
+              XeroConnector.prototype.get.onCall(7).returns(BBPromise.resolve({
+                Response: {
+                  Payments: {
+                    Payment: 'payment'
+                  }
+                }
+              }));
+              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings)
+            })
+        });
+        after(function () {
+          XeroConnector.prototype.authorize.restore()
+          XeroConnector.prototype.get.restore()
+          return Model.Subscription.removeAsync({})
+        });
+        it('calls Connector#get with the all the subscriptions endpoints', function () {
+          expect(XeroConnector.prototype.get.firstCall.args[0])
+            .to.eql(_subscription.endpoints[0]);
+          expect(XeroConnector.prototype.get.secondCall.args[0])
+            .to.eql(_subscription.endpoints[1]);
+          expect(XeroConnector.prototype.get.thirdCall.args[0])
+            .to.eql(_subscription.endpoints[2]);
+        });
+        it('calls Connector#get with the correct header', function () {
+          expect(XeroConnector.prototype.get.firstCall.args[1])
+            .to.eql(_header);
+          expect(XeroConnector.prototype.get.secondCall.args[1])
+            .to.eql({});
+        });
+        it('sets the lastPoll on the subscription.meta for each endpoint', function () {
+          return Model.Subscription.findOneAsync().then(function (sub) {
+            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
+          })
         });
       });
     });

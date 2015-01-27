@@ -66,8 +66,7 @@ describe('Poll Integration', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
-              meta: {}
+              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
                _subscription = new SubscriptionController(subscription[0])
@@ -85,7 +84,7 @@ describe('Poll Integration', function () {
               _response = response;
             })
           }).catch(function (err) {
-            console.log('error', err)
+            console.log('error', err, err.stack)
           });
         });
         after(function () {
@@ -151,8 +150,7 @@ describe('Poll Integration', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
-              meta: {}
+              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
                _subscription = new SubscriptionController(subscription[0])
