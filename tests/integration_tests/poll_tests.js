@@ -25,8 +25,8 @@ describe.only('Poll Integration', function () {
       describe('with results from Xero', function () {
         var getSpy, _response;
         this.timeout(600000)
-        before(function () {
-          return BBPromise.all([
+        before(function (done) {
+          BBPromise.all([
             new Model.Organisation({
               _id: 'orgId',
               name: 'test org',
@@ -83,10 +83,12 @@ describe.only('Poll Integration', function () {
           ]).then(function () {
             _subscription.eventEmitter.on('done', function () {
               _response = 'done';
+              done()
             });
             _subscription.eventEmitter.on('xero:modified:User', function (user) {
               _user = user;
             });
+            Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings)
           }).catch(function (err) {
             console.log('error', err, err.stack)
           });
@@ -101,16 +103,12 @@ describe.only('Poll Integration', function () {
           ])
         });
         var _header = {};
-        it('calls done', function () {
-          return  Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings).then(function () {
-            expect(_response)
-              .to.eql('done');
-          })
+        it('emits done event', function () {
+          expect(_response)
+            .to.eql('done');
         });
         it('emits a xero:modified:User event', function () {
-          return  Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings).then(function () {
-            expect(_user).to.exist;
-          })
+          expect(_user).to.exist;
         });
       });
     });
@@ -121,8 +119,8 @@ describe.only('Poll Integration', function () {
       describe('with results from Xero', function () {
         var getSpy, _response;
         this.timeout(600000)
-        before(function () {
-          return BBPromise.all([
+        before(function (done) {
+          BBPromise.all([
             new Model.Organisation({
               _id: 'orgId',
               name: 'test org',
@@ -194,8 +192,9 @@ describe.only('Poll Integration', function () {
           ]).then(function () {
             _subscription.eventEmitter.on('done', function () {
               _response = 'done';
+              done();
             });
-            
+            Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject())
           }).catch(function (err) {
             console.log('error', err)
           });
@@ -211,12 +210,12 @@ describe.only('Poll Integration', function () {
           ])
         });
         var _header = {};
-        it('returns the correct number of promises', function () {
-          return  Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject()).then(function () {
-            expect(_response).to.eql('done');
-          })
+        it('emits done event', function () {
+          expect(_response).to.eql('done');
         });
       });
     });
   });
 });
+
+//tests for invalid bounce token/ expired tokens, does it still emit events
