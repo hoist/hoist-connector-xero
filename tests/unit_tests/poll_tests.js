@@ -7,7 +7,6 @@ var BBPromise = require('bluebird');
 var expect = require('chai').expect;
 var Model = require('hoist-model');
 var mongoose = BBPromise.promisifyAll(Model._mongoose);
-mongoose.set('debug', true);
 var moment = require('moment');
 var XeroConnector = require('../../lib/connector');
 var Authorization = require('../../lib/authorization');
