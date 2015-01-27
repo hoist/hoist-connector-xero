@@ -1,11 +1,13 @@
 'use strict';
 var config = require('config');
+require('../bootstrap');
 var Poll = require('../../lib/poll');
 var sinon = require('sinon');
 var BBPromise = require('bluebird');
 var expect = require('chai').expect;
 var Model = require('hoist-model');
 var mongoose = BBPromise.promisifyAll(Model._mongoose);
+mongoose.set('debug', true);
 var moment = require('moment');
 var XeroConnector = require('../../lib/connector');
 var Authorization = require('../../lib/authorization');
