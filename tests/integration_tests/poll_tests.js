@@ -12,7 +12,7 @@ var XeroConnector = require('../../lib/connector');
 var Authorization = require('../../lib/authorization');
 var SubscriptionController = require('../fixtures/subscription_controller');
 
-describe('Poll Integration', function () {
+describe.only('Poll Integration', function () {
   before(function () {
     return mongoose.connectAsync(config.get('Hoist.mongo.db'))
   });
@@ -21,7 +21,7 @@ describe('Poll Integration', function () {
   });
   describe('with a Private connector', function () {
     describe('with no lastPolled for each endpoint', function () {
-      var _app, _bucket, _subscription, _bouncerToken, _conn;
+      var _app, _bucket, _subscription, _bouncerToken, _conn, _user;
       describe('with results from Xero', function () {
         var getSpy, _response;
         this.timeout(600000)
@@ -70,7 +70,7 @@ describe('Poll Integration', function () {
               endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
-               _subscription = new SubscriptionController(subscription[0])
+              _subscription = new SubscriptionController(subscription[0])
             }),
             new Model.Bucket({
               _id: 'bucketId',
@@ -81,15 +81,18 @@ describe('Poll Integration', function () {
               _bucket = bucket[0];
             })
           ]).then(function () {
-            return new Poll(_app, _bucket, _subscription, _conn.settings).then(function (response) {
-              _response = response;
-            })
+            _subscription.eventEmitter.on('done', function () {
+              _response = 'done';
+            });
+            _subscription.eventEmitter.on('xero:modified:User', function (user) {
+              _user = user;
+            });
           }).catch(function (err) {
             console.log('error', err, err.stack)
           });
         });
         after(function () {
-          BBPromise.all([
+          return BBPromise.all([
             Model.ConnectorSetting.removeAsync({}),
             Model.Application.removeAsync({}),
             Model.Organisation.removeAsync({}),
@@ -98,9 +101,16 @@ describe('Poll Integration', function () {
           ])
         });
         var _header = {};
-        it('returns the correct number of promises', function () {
-          expect(_response.length)
-            .to.eql(_subscription.endpoints.length);
+        it('calls done', function () {
+          return  Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings).then(function () {
+            expect(_response)
+              .to.eql('done');
+          })
+        });
+        it('emits a xero:modified:User event', function () {
+          return  Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings).then(function () {
+            expect(_user).to.exist;
+          })
         });
       });
     });
@@ -154,7 +164,7 @@ describe('Poll Integration', function () {
               endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
-               _subscription = new SubscriptionController(subscription[0])
+              _subscription = new SubscriptionController(subscription[0])
             }),
             new Model.BouncerToken({
               _id: 'bouncerTokenId',
@@ -182,15 +192,16 @@ describe('Poll Integration', function () {
               _bucket = bucket[0];
             })
           ]).then(function () {
-            return Poll(_app, _bucket, _subscription, _conn.settings, _bouncerToken).then(function (response) {
-              _response = response;
-            })
+            _subscription.eventEmitter.on('done', function () {
+              _response = 'done';
+            });
+            
           }).catch(function (err) {
             console.log('error', err)
           });
         });
         after(function () {
-          BBPromise.all([
+          return BBPromise.all([
             Model.ConnectorSetting.removeAsync({}),
             Model.Application.removeAsync({}),
             Model.BouncerToken.removeAsync({}),
@@ -201,8 +212,9 @@ describe('Poll Integration', function () {
         });
         var _header = {};
         it('returns the correct number of promises', function () {
-          expect(_response.length)
-            .to.eql(_subscription.endpoints.length);
+          return  Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject()).then(function () {
+            expect(_response).to.eql('done');
+          })
         });
       });
     });

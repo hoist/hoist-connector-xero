@@ -1,11 +1,14 @@
 'use strict';
 var _ = require('lodash');
+var EventEmitter = require('events').EventEmitter;
+
 
 function SubscriptionController(subscription) {
   _.forOwn(subscription.toObject(), _.bind(function (n, key) {
     this[key] = n;
   }, this));
-
+  this.eventEmitter = new EventEmitter();
+  
   this.set = function (key, value) {
     subscription.meta = subscription.meta ? subscription.meta : {};
     if (typeof subscription.meta[key] === 'object' && typeof value === 'object') {
