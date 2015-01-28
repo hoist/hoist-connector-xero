@@ -18,7 +18,7 @@ function SubscriptionController(subscription) {
     }
     subscription.markModified('meta');
     return subscription.saveAsync().bind(this).then(function (savedSubscription) {
-      subscription.meta = savedSubscription[0].meta;
+      this.meta = savedSubscription[0].meta;
       return this;
     });
   };
