@@ -47,6 +47,7 @@ describe.skip('Partner Auth', function () {
   });
   describe('second bounce', function () {
     before(function () {
+      /*jshint camelcase: false */
       var bounce = {
         query: {
           oauth_verifier: '1500743'

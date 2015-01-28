@@ -13,12 +13,11 @@ var Authorization = require('../../lib/authorization');
 var SubscriptionController = require('../fixtures/subscription_controller');
 
 describe('Poll', function () {
-  var authorizeStub, getStub;
   before(function () {
-    return mongoose.connectAsync(config.get('Hoist.mongo.db'))
+    return mongoose.connectAsync(config.get('Hoist.mongo.db'));
   });
   after(function () {
-    return mongoose.disconnectAsync()
+    return mongoose.disconnectAsync();
   });
   describe('with a Public connector', function () {
     describe('with no lastPolled for each endpoint', function () {
@@ -29,8 +28,7 @@ describe('Poll', function () {
             _id: 'orgId',
             name: 'test org',
             slug: 'org'
-          }).saveAsync()
-          .then(function (org) {}),
+          }).saveAsync(),
           new Model.Application({
             _id: 'appId',
             organisation: 'orgId',
@@ -84,9 +82,9 @@ describe('Poll', function () {
             _bouncerToken = bouncerToken[0];
           })
         ]).then(function () {
-          _momentNow = moment.utc().format()
+          _momentNow = moment.utc().format();
         }).catch(function (err) {
-          console.log('error', err)
+          console.log('error', err);
         });
       });
       after(function () {
@@ -96,7 +94,7 @@ describe('Poll', function () {
           Model.Application.removeAsync({}),
           Model.Organisation.removeAsync({}),
           Model.Bucket.removeAsync({})
-        ])
+        ]);
       });
       describe('with no results from Xero', function () {
         var _header = {};
@@ -109,12 +107,12 @@ describe('Poll', function () {
               endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = new SubscriptionController(subscription[0])
+              _subscription = new SubscriptionController(subscription[0]);
               sinon.stub(XeroConnector.prototype, 'get').returns(BBPromise.resolve({
                 Response: {}
-              }))
-              sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve())
-              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject())
+              }));
+              sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject());
             });
         });
         after(function () {
@@ -143,7 +141,7 @@ describe('Poll', function () {
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
             expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
-          })
+          });
         });
       });
       describe('with results from Xero', function () {
@@ -215,7 +213,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return Poll(_app, _bucket, _subscription, _conn.settings, _bouncerToken)
+              return new Poll(_app, _bucket, _subscription, _conn.settings, _bouncerToken);
             });
         });
         after(function () {
@@ -245,20 +243,19 @@ describe('Poll', function () {
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
             expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
-          })
+          });
         });
       });
     });
     describe('with a lastPolled time for each endpoint', function () {
-      var _app, _bucket, _subscription, _bouncerToken, _conn, _momentNow;
+      var _app, _bucket, _subscription, _bouncerToken, _conn;
       before(function () {
         return BBPromise.all([
           new Model.Organisation({
             _id: 'orgId',
             name: 'test org',
             slug: 'org'
-          }).saveAsync()
-          .then(function (org) {}),
+          }).saveAsync(),
           new Model.Application({
             _id: 'appId',
             organisation: 'orgId',
@@ -312,7 +309,7 @@ describe('Poll', function () {
             _bouncerToken = bouncerToken[0];
           })
         ]).catch(function (err) {
-          console.log('error', err)
+          console.log('error', err);
         });
       });
       after(function () {
@@ -322,10 +319,10 @@ describe('Poll', function () {
           Model.Application.removeAsync({}),
           Model.Organisation.removeAsync({}),
           Model.Bucket.removeAsync({})
-        ])
+        ]);
       });
       describe('with no results from Xero', function () {
-        var _momentNow = moment.utc().format()
+        var _momentNow = moment.utc().format();
         var _header = {
           'If-Modified-Since': _momentNow
         };
@@ -343,13 +340,13 @@ describe('Poll', function () {
               }
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = new SubscriptionController(subscription[0])
+              _subscription = new SubscriptionController(subscription[0]);
               sinon.stub(XeroConnector.prototype, 'get').returns(BBPromise.resolve({
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject())
-            })
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject());
+            });
         });
         after(function () {
           XeroConnector.prototype.authorize.restore();
@@ -377,11 +374,11 @@ describe('Poll', function () {
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
             expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
-          })
+          });
         });
       });
       describe('with results from Xero', function () {
-        var _momentNow = moment.utc().format()
+        var _momentNow = moment.utc().format();
         var _header = {
           'If-Modified-Since': _momentNow
         };
@@ -399,9 +396,9 @@ describe('Poll', function () {
               }
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = new SubscriptionController(subscription[0])
-              sinon.stub(XeroConnector.prototype, 'get')
-              sinon.stub(XeroConnector.prototype, 'authorize')
+              _subscription = new SubscriptionController(subscription[0]);
+              sinon.stub(XeroConnector.prototype, 'get');
+              sinon.stub(XeroConnector.prototype, 'authorize');
               XeroConnector.prototype.get.onCall(0).returns(BBPromise.resolve({
                 Response: {
                   Invoices: {
@@ -458,13 +455,13 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject())
-            })
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject());
+            });
         });
         after(function () {
-          XeroConnector.prototype.authorize.restore()
-          XeroConnector.prototype.get.restore()
-          return Model.Subscription.removeAsync({})
+          XeroConnector.prototype.authorize.restore();
+          XeroConnector.prototype.get.restore();
+          return Model.Subscription.removeAsync({});
         });
         it('calls Connector#authorize with the bouncer token', function () {
           expect(XeroConnector.prototype.authorize)
@@ -487,7 +484,7 @@ describe('Poll', function () {
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
             expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
-          })
+          });
         });
       });
     });
@@ -501,8 +498,7 @@ describe('Poll', function () {
             _id: 'orgId',
             name: 'test org',
             slug: 'org'
-          }).saveAsync()
-          .then(function (org) {}),
+          }).saveAsync(),
           new Model.Application({
             _id: 'appId',
             organisation: 'orgId',
@@ -541,7 +537,7 @@ describe('Poll', function () {
             _bucket = bucket[0];
           })
         ]).catch(function (err) {
-          console.log('error', err)
+          console.log('error', err);
         });
       });
       after(function () {
@@ -550,7 +546,7 @@ describe('Poll', function () {
           Model.Application.removeAsync({}),
           Model.Organisation.removeAsync({}),
           Model.Bucket.removeAsync({})
-        ])
+        ]);
       });
       describe('with no results from Xero', function () {
         var _header = {};
@@ -563,12 +559,12 @@ describe('Poll', function () {
               endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = new SubscriptionController(subscription[0])
+              _subscription = new SubscriptionController(subscription[0]);
               sinon.stub(XeroConnector.prototype, 'get').returns(BBPromise.resolve({
                 Response: {}
-              }))
-              sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve())
-              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings)
+              }));
+              sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
             });
         });
         after(function () {
@@ -606,9 +602,9 @@ describe('Poll', function () {
               endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = new SubscriptionController(subscription[0])
-              sinon.stub(XeroConnector.prototype, 'get')
-              sinon.stub(XeroConnector.prototype, 'authorize')
+              _subscription = new SubscriptionController(subscription[0]);
+              sinon.stub(XeroConnector.prototype, 'get');
+              sinon.stub(XeroConnector.prototype, 'authorize');
 
               XeroConnector.prototype.get.onCall(0).returns(BBPromise.resolve({
                 Response: {
@@ -666,15 +662,15 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings)
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
             }).catch(function (err) {
-              console.log('error', err)
+              console.log('error', err);
             });
         });
         after(function () {
-          XeroConnector.prototype.authorize.restore()
-          XeroConnector.prototype.get.restore()
-          return Model.Subscription.removeAsync({})
+          XeroConnector.prototype.authorize.restore();
+          XeroConnector.prototype.get.restore();
+          return Model.Subscription.removeAsync({});
         });
         var _header = {};
         it('calls Connector#get with the all the subscriptions endpoints', function () {
@@ -694,15 +690,14 @@ describe('Poll', function () {
       });
     });
     describe('with a lastPolled time for each endpoint', function () {
-      var _app, _bucket, _subscription, _bouncerToken, _conn, _momentNow;
+      var _app, _bucket, _subscription, _conn;
       before(function () {
         return BBPromise.all([
           new Model.Organisation({
             _id: 'orgId',
             name: 'test org',
             slug: 'org'
-          }).saveAsync()
-          .then(function (org) {}),
+          }).saveAsync(),
           new Model.Application({
             _id: 'appId',
             organisation: 'orgId',
@@ -741,7 +736,7 @@ describe('Poll', function () {
             _bucket = bucket[0];
           })
         ]).catch(function (err) {
-          console.log('error', err)
+          console.log('error', err);
         });
       });
       after(function () {
@@ -751,10 +746,10 @@ describe('Poll', function () {
           Model.Application.removeAsync({}),
           Model.Organisation.removeAsync({}),
           Model.Bucket.removeAsync({})
-        ])
+        ]);
       });
       describe('with no results from Xero', function () {
-        var _momentNow = moment.utc().format()
+        var _momentNow = moment.utc().format();
         var _header = {
           'If-Modified-Since': _momentNow
         };
@@ -772,13 +767,13 @@ describe('Poll', function () {
               }
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = new SubscriptionController(subscription[0])
+              _subscription = new SubscriptionController(subscription[0]);
               sinon.stub(XeroConnector.prototype, 'get').returns(BBPromise.resolve({
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings)
-            })
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
+            });
         });
         after(function () {
           XeroConnector.prototype.authorize.restore();
@@ -802,11 +797,11 @@ describe('Poll', function () {
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
             expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
-          })
+          });
         });
       });
       describe('with results from Xero', function () {
-        var _momentNow = moment.utc().format()
+        var _momentNow = moment.utc().format();
         var _header = {
           'If-Modified-Since': _momentNow
         };
@@ -824,9 +819,9 @@ describe('Poll', function () {
               }
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = new SubscriptionController(subscription[0])
-              sinon.stub(XeroConnector.prototype, 'get')
-              sinon.stub(XeroConnector.prototype, 'authorize')
+              _subscription = new SubscriptionController(subscription[0]);
+              sinon.stub(XeroConnector.prototype, 'get');
+              sinon.stub(XeroConnector.prototype, 'authorize');
               XeroConnector.prototype.get.onCall(0).returns(BBPromise.resolve({
                 Response: {
                   Invoices: {
@@ -883,13 +878,13 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings)
-            })
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
+            });
         });
         after(function () {
-          XeroConnector.prototype.authorize.restore()
-          XeroConnector.prototype.get.restore()
-          return Model.Subscription.removeAsync({})
+          XeroConnector.prototype.authorize.restore();
+          XeroConnector.prototype.get.restore();
+          return Model.Subscription.removeAsync({});
         });
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
@@ -908,7 +903,7 @@ describe('Poll', function () {
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
             expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
-          })
+          });
         });
       });
     });

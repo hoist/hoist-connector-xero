@@ -180,7 +180,7 @@ describe('XeroConnector', function () {
           return expect(settings)
             .to.have.property('publicKey');
         });
-      })
+      });
       describe('Public connector', function() {
         var settings;
         before(function (done) {
@@ -193,7 +193,7 @@ describe('XeroConnector', function () {
         it('returns an empty object', function () {
           return expect(settings).to.not.have.property('publicKey');
         });
-      })
+      });
     });
   });
 });

@@ -1,38 +1,33 @@
 'use strict';
 var config = require('config');
 var Poll = require('../../lib/poll');
-var sinon = require('sinon');
 require('../bootstrap');
 var BBPromise = require('bluebird');
 var expect = require('chai').expect;
 var Model = require('hoist-model');
 var mongoose = BBPromise.promisifyAll(Model._mongoose);
-var moment = require('moment');
-var XeroConnector = require('../../lib/connector');
-var Authorization = require('../../lib/authorization');
 var SubscriptionController = require('../fixtures/subscription_controller');
 
-describe.only('Poll Integration', function () {
+describe('Poll Integration', function () {
   before(function () {
-    return mongoose.connectAsync(config.get('Hoist.mongo.db'))
+    return mongoose.connectAsync(config.get('Hoist.mongo.db'));
   });
   after(function () {
-    return mongoose.disconnectAsync()
+    return mongoose.disconnectAsync();
   });
   describe('with a Private connector', function () {
     describe('with no lastPolled for each endpoint', function () {
-      var _app, _bucket, _subscription, _bouncerToken, _conn, _user;
+      var _app, _bucket, _subscription, _conn, _user;
       describe('with results from Xero', function () {
-        var getSpy, _response;
-        this.timeout(600000)
+        var _response;
+        this.timeout(600000);
         before(function (done) {
           BBPromise.all([
             new Model.Organisation({
               _id: 'orgId',
               name: 'test org',
               slug: 'org'
-            }).saveAsync()
-            .then(function (org) {}),
+            }).saveAsync(),
             new Model.Application({
               _id: 'appId',
               organisation: 'orgId',
@@ -70,7 +65,7 @@ describe.only('Poll Integration', function () {
               endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = new SubscriptionController(subscription[0])
+              _subscription = new SubscriptionController(subscription[0]);
             }),
             new Model.Bucket({
               _id: 'bucketId',
@@ -83,14 +78,14 @@ describe.only('Poll Integration', function () {
           ]).then(function () {
             _subscription.eventEmitter.on('done', function () {
               _response = 'done';
-              done()
+              done();
             });
             _subscription.eventEmitter.on('xero:modified:User', function (user) {
               _user = user;
             });
-            Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings)
+            return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
           }).catch(function (err) {
-            console.log('error', err, err.stack)
+            console.log('error', err, err.stack);
           });
         });
         after(function () {
@@ -100,9 +95,8 @@ describe.only('Poll Integration', function () {
             Model.Organisation.removeAsync({}),
             Model.Bucket.removeAsync({}),
             Model.Subscription.removeAsync({})
-          ])
+          ]);
         });
-        var _header = {};
         it('emits done event', function () {
           expect(_response)
             .to.eql('done');
@@ -117,16 +111,15 @@ describe.only('Poll Integration', function () {
     describe('with no lastPolled for each endpoint', function () {
       var _app, _bucket, _subscription, _bouncerToken, _conn;
       describe('with results from Xero', function () {
-        var getSpy, _response;
-        this.timeout(600000)
+        var _response;
+        this.timeout(600000);
         before(function (done) {
           BBPromise.all([
             new Model.Organisation({
               _id: 'orgId',
               name: 'test org',
               slug: 'org'
-            }).saveAsync()
-            .then(function (org) {}),
+            }).saveAsync(),
             new Model.Application({
               _id: 'appId',
               organisation: 'orgId',
@@ -162,7 +155,7 @@ describe.only('Poll Integration', function () {
               endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
             }).saveAsync()
             .then(function (subscription) {
-              _subscription = new SubscriptionController(subscription[0])
+              _subscription = new SubscriptionController(subscription[0]);
             }),
             new Model.BouncerToken({
               _id: 'bouncerTokenId',
@@ -194,9 +187,9 @@ describe.only('Poll Integration', function () {
               _response = 'done';
               done();
             });
-            Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject())
+            return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject());
           }).catch(function (err) {
-            console.log('error', err)
+            console.log('error', err);
           });
         });
         after(function () {
@@ -207,9 +200,8 @@ describe.only('Poll Integration', function () {
             Model.Organisation.removeAsync({}),
             Model.Bucket.removeAsync({}),
             Model.Subscription.removeAsync({})
-          ])
+          ]);
         });
-        var _header = {};
         it('emits done event', function () {
           expect(_response).to.eql('done');
         });
