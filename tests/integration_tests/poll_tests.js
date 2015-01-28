@@ -102,7 +102,9 @@ describe('Poll Integration', function () {
             .to.eql('done');
         });
         it('emits a xero:modified:User event', function () {
+           /* jshint -W030 */
           expect(_user).to.exist;
+          /* jshint +W030 */
         });
       });
     });
