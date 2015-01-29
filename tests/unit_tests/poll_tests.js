@@ -104,7 +104,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0]);
@@ -112,7 +112,7 @@ describe('Poll', function () {
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject());
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn, _bouncerToken.toObject());
             });
         });
         after(function () {
@@ -126,11 +126,11 @@ describe('Poll', function () {
         });
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
-            .to.eql(_subscription.endpoints[0]);
+            .to.eql('/' + _subscription.endpoints[0]);
           expect(XeroConnector.prototype.get.secondCall.args[0])
-            .to.eql(_subscription.endpoints[1]);
+            .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
-            .to.eql(_subscription.endpoints[2]);
+            .to.eql('/' + _subscription.endpoints[2]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -151,7 +151,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0]);
@@ -213,7 +213,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return new Poll(_app, _bucket, _subscription, _conn.settings, _bouncerToken);
+              return new Poll(_app, _bucket, _subscription, _conn, _bouncerToken);
             });
         });
         after(function () {
@@ -228,11 +228,11 @@ describe('Poll', function () {
         });
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
-            .to.eql(_subscription.endpoints[0]);
+            .to.eql('/' + _subscription.endpoints[0]);
           expect(XeroConnector.prototype.get.secondCall.args[0])
-            .to.eql(_subscription.endpoints[1]);
+            .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
-            .to.eql(_subscription.endpoints[2]);
+            .to.eql('/' + _subscription.endpoints[2]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -332,7 +332,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments'],
               meta: {
                 Invoices: {
                   lastPolled: _momentNow
@@ -345,7 +345,7 @@ describe('Poll', function () {
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject());
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn, _bouncerToken.toObject());
             });
         });
         after(function () {
@@ -359,11 +359,11 @@ describe('Poll', function () {
         });
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
-            .to.eql(_subscription.endpoints[0]);
+            .to.eql('/' + _subscription.endpoints[0]);
           expect(XeroConnector.prototype.get.secondCall.args[0])
-            .to.eql(_subscription.endpoints[1]);
+            .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
-            .to.eql(_subscription.endpoints[2]);
+            .to.eql('/' + _subscription.endpoints[2]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -388,7 +388,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments'],
               meta: {
                 Invoices: {
                   lastPolled: _momentNow
@@ -455,7 +455,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject());
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn, _bouncerToken.toObject());
             });
         });
         after(function () {
@@ -469,11 +469,11 @@ describe('Poll', function () {
         });
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
-            .to.eql(_subscription.endpoints[0]);
+            .to.eql('/' + _subscription.endpoints[0]);
           expect(XeroConnector.prototype.get.secondCall.args[0])
-            .to.eql(_subscription.endpoints[1]);
+            .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
-            .to.eql(_subscription.endpoints[2]);
+            .to.eql('/' + _subscription.endpoints[2]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -556,7 +556,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0]);
@@ -564,7 +564,7 @@ describe('Poll', function () {
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
             });
         });
         after(function () {
@@ -579,11 +579,11 @@ describe('Poll', function () {
         });
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
-            .to.eql(_subscription.endpoints[0]);
+            .to.eql('/' + _subscription.endpoints[0]);
           expect(XeroConnector.prototype.get.secondCall.args[0])
-            .to.eql(_subscription.endpoints[1]);
+            .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
-            .to.eql(_subscription.endpoints[2]);
+            .to.eql('/' + _subscription.endpoints[2]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -599,7 +599,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0]);
@@ -662,7 +662,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
             }).catch(function (err) {
               console.log('error', err);
             });
@@ -675,11 +675,11 @@ describe('Poll', function () {
         var _header = {};
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
-            .to.eql(_subscription.endpoints[0]);
+            .to.eql('/' + _subscription.endpoints[0]);
           expect(XeroConnector.prototype.get.secondCall.args[0])
-            .to.eql(_subscription.endpoints[1]);
+            .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
-            .to.eql(_subscription.endpoints[2]);
+            .to.eql('/' + _subscription.endpoints[2]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -759,7 +759,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments'],
               meta: {
                 Invoices: {
                   lastPolled: _momentNow
@@ -772,7 +772,7 @@ describe('Poll', function () {
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
             });
         });
         after(function () {
@@ -782,11 +782,11 @@ describe('Poll', function () {
         });
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
-            .to.eql(_subscription.endpoints[0]);
+            .to.eql('/' + _subscription.endpoints[0]);
           expect(XeroConnector.prototype.get.secondCall.args[0])
-            .to.eql(_subscription.endpoints[1]);
+            .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
-            .to.eql(_subscription.endpoints[2]);
+            .to.eql('/' + _subscription.endpoints[2]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -811,7 +811,7 @@ describe('Poll', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments'],
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments'],
               meta: {
                 Invoices: {
                   lastPolled: _momentNow
@@ -878,7 +878,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
+              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
             });
         });
         after(function () {
@@ -888,11 +888,11 @@ describe('Poll', function () {
         });
         it('calls Connector#get with the all the subscriptions endpoints', function () {
           expect(XeroConnector.prototype.get.firstCall.args[0])
-            .to.eql(_subscription.endpoints[0]);
+            .to.eql('/' + _subscription.endpoints[0]);
           expect(XeroConnector.prototype.get.secondCall.args[0])
-            .to.eql(_subscription.endpoints[1]);
+            .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
-            .to.eql(_subscription.endpoints[2]);
+            .to.eql('/' + _subscription.endpoints[2]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])

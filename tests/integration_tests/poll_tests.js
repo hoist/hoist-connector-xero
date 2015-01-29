@@ -62,7 +62,7 @@ describe('Poll Integration', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0]);
@@ -80,10 +80,10 @@ describe('Poll Integration', function () {
               _response = 'done';
               done();
             });
-            _subscription.eventEmitter.on('xero:modified:User', function (user) {
+            _subscription.eventEmitter.on('connectorKey:modified:User', function (user) {
               _user = user;
             });
-            return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings);
+            return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
           }).catch(function (err) {
             console.log('error', err, err.stack);
           });
@@ -101,7 +101,7 @@ describe('Poll Integration', function () {
           expect(_response)
             .to.eql('done');
         });
-        it('emits a xero:modified:User event', function () {
+        it('emits a connectorKey:modified:User event', function () {
            /* jshint -W030 */
           expect(_user).to.exist;
           /* jshint +W030 */
@@ -154,7 +154,7 @@ describe('Poll Integration', function () {
               connector: 'connectorKey',
               application: 'appId',
               environment: 'test',
-              endpoints: ['/Invoices', '/Contacts', '/Users', '/Payments']
+              endpoints: ['Invoices', 'Contacts', 'Users', 'Payments']
             }).saveAsync()
             .then(function (subscription) {
               _subscription = new SubscriptionController(subscription[0]);
@@ -189,7 +189,7 @@ describe('Poll Integration', function () {
               _response = 'done';
               done();
             });
-            return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn.settings, _bouncerToken.toObject());
+            return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn, _bouncerToken.toObject());
           }).catch(function (err) {
             console.log('error', err);
           });

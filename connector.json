@@ -71,7 +71,8 @@
     },
     "Contacts" : {
       "sample" : "./samples/endpoints/contacts.js",
-      "docs" : "https://developer.xero.com/documentation/api/contacts"
+      "docs" : "https://developer.xero.com/documentation/api/contacts",
+      "subscribe" : true
     },
     "ContactGroups" : {
       "sample" : "./samples/endpoints/contactgroups.js",
@@ -95,7 +96,8 @@
     },
     "Invoices" : {
       "sample" : "./samples/endpoints/invoices.js",
-      "docs" : "https://developer.xero.com/documentation/api/invoices"
+      "docs" : "https://developer.xero.com/documentation/api/invoices",
+      "subscribe" : true
     },
     "Items" : {
       "sample" : "./samples/endpoints/items.js",
