@@ -1,0 +1,16 @@
+{
+  "Hoist": {
+    "mongo": {
+      "db": "mongodb://localhost/hoist-default"
+    },
+    "messageBus": {
+      "type": "sqs"
+    },
+    "aws": {
+      "account": "test",
+      "secret": "test",
+      "region": "ap-southeast-2",
+      "prefix": "DEVELOPMENT_"
+    }
+  }
+}

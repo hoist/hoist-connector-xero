@@ -18,7 +18,7 @@ var globs = {
 function runJshint() {
   return gulp.src(
       globs.js.lib.concat(
-        globs.js.gulpfile)
+        globs.js.gulpfile.concat(globs.js.specs))
     )
     .pipe(jshint())
     .pipe(jshint.reporter('jshint-stylish'))

@@ -72,7 +72,7 @@ describe('XeroConnector', function () {
       var result;
       var xml = '<result><key>name</key></result>';
       before(function () {
-        sinon.stub(OAuth.prototype, '_performSecureRequest').callsArgWith(7, null, xml, {});
+        sinon.stub(OAuth.prototype, '_performSecureRequest').callsArgWith(8, null, xml, {});
         connector = new XeroConnector({
           privateKey: 'privateKey',
           publicKey: 'publicKey',
@@ -103,7 +103,7 @@ describe('XeroConnector', function () {
       var xml = '<result><key>name</key></result>';
       var data = 'data';
       before(function () {
-        sinon.stub(OAuth.prototype, '_performSecureRequest').callsArgWith(7, null, xml, {});
+        sinon.stub(OAuth.prototype, '_performSecureRequest').callsArgWith(8, null, xml, {});
         connector = new XeroConnector({
           privateKey: 'privateKey',
           publicKey: 'publicKey',
@@ -136,7 +136,7 @@ describe('XeroConnector', function () {
       var xml = '<result><key>name</key></result>';
       var data = 'data';
       before(function () {
-        sinon.stub(OAuth.prototype, '_performSecureRequest').callsArgWith(7, null, xml, {});
+        sinon.stub(OAuth.prototype, '_performSecureRequest').callsArgWith(8, null, xml, {});
         connector = new XeroConnector({
           privateKey: 'privateKey',
           publicKey: 'publicKey',
@@ -180,7 +180,7 @@ describe('XeroConnector', function () {
           return expect(settings)
             .to.have.property('publicKey');
         });
-      })
+      });
       describe('Public connector', function() {
         var settings;
         before(function (done) {
@@ -193,7 +193,7 @@ describe('XeroConnector', function () {
         it('returns an empty object', function () {
           return expect(settings).to.not.have.property('publicKey');
         });
-      })
+      });
     });
   });
 });
