@@ -112,7 +112,7 @@ describe('Poll', function () {
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn, _bouncerToken.toObject());
+              return new Poll(_app.toObject(), _subscription, _conn, _bouncerToken.toObject());
             });
         });
         after(function () {
@@ -213,7 +213,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return new Poll(_app, _bucket, _subscription, _conn, _bouncerToken);
+              return new Poll(_app, _subscription, _conn, _bouncerToken);
             });
         });
         after(function () {
@@ -345,7 +345,7 @@ describe('Poll', function () {
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn, _bouncerToken.toObject());
+              return new Poll(_app.toObject(), _subscription, _conn, _bouncerToken.toObject());
             });
         });
         after(function () {
@@ -455,7 +455,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn, _bouncerToken.toObject());
+              return new Poll(_app.toObject(), _subscription, _conn, _bouncerToken.toObject());
             });
         });
         after(function () {
@@ -564,7 +564,7 @@ describe('Poll', function () {
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
+              return new Poll(_app.toObject(), _subscription, _conn);
             });
         });
         after(function () {
@@ -662,7 +662,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
+              return new Poll(_app.toObject(), _subscription, _conn);
             }).catch(function (err) {
               console.log('error', err);
             });
@@ -772,7 +772,7 @@ describe('Poll', function () {
                 Response: {}
               }));
               sinon.stub(XeroConnector.prototype, 'authorize').returns(BBPromise.resolve());
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
+              return new Poll(_app.toObject(), _subscription, _conn);
             });
         });
         after(function () {
@@ -878,7 +878,7 @@ describe('Poll', function () {
                   }
                 }
               }));
-              return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
+              return new Poll(_app.toObject(), _subscription, _conn);
             });
         });
         after(function () {
