@@ -83,7 +83,7 @@ describe('Poll Integration', function () {
             _subscription.eventEmitter.on('connectorKey:modified:User', function (user) {
               _user = user;
             });
-            return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn);
+            return new Poll(_app.toObject(), _subscription, _conn);
           }).catch(function (err) {
             console.log('error', err, err.stack);
           });
@@ -189,7 +189,7 @@ describe('Poll Integration', function () {
               _response = 'done';
               done();
             });
-            return new Poll(_app.toObject(), _bucket.toObject(), _subscription, _conn, _bouncerToken.toObject());
+            return new Poll(_app.toObject(), _subscription, _conn, _bouncerToken.toObject());
           }).catch(function (err) {
             console.log('error', err);
           });
