@@ -55,15 +55,18 @@
     },
     "BankStatements" : {
       "sample" : "./samples/endpoints/bankstatements.js",
-      "docs" : "https://developer.xero.com/documentation/api/bankstatements"
+      "docs" : "https://developer.xero.com/documentation/api/bankstatements",
+      "subscribe" : true
     },
     "BankTransactions" : {
       "sample" : "./samples/endpoints/banktransactions.js",
-      "docs" : "https://developer.xero.com/documentation/api/banktransactions"
+      "docs" : "https://developer.xero.com/documentation/api/banktransactions",
+      "subscribe" : true
     },
     "BankTransfers" : {
       "sample" : "./samples/endpoints/banktransfers.js",
-      "docs" : "https://developer.xero.com/documentation/api/banktransfers"
+      "docs" : "https://developer.xero.com/documentation/api/banktransfers",
+      "subscribe" : true
     },
     "BrandingThemes" : {
       "sample" : "./samples/endpoints/brandingthemes.js",
@@ -80,7 +83,8 @@
     },
     "CreditNotes" : {
       "sample" : "./samples/endpoints/creditnotes.js",
-      "docs" : "https://developer.xero.com/documentation/api/creditnotes"
+      "docs" : "https://developer.xero.com/documentation/api/creditnotes",
+      "subscribe" : true
     },
     "Currencies" : {
       "sample" : "./samples/endpoints/currencies.js",
@@ -88,11 +92,13 @@
     },
     "Employees" : {
       "sample" : "./samples/endpoints/employees.js",
-      "docs" : "https://developer.xero.com/documentation/api/employees"
+      "docs" : "https://developer.xero.com/documentation/api/employees",
+      "subscribe" : true
     },
     "ExpenseClaims" : {
       "sample" : "./samples/endpoints/expenseclaims.js",
-      "docs" : "https://developer.xero.com/documentation/api/expenseclaims"
+      "docs" : "https://developer.xero.com/documentation/api/expenseclaims",
+      "subscribe" : true
     },
     "Invoices" : {
       "sample" : "./samples/endpoints/invoices.js",
@@ -101,15 +107,18 @@
     },
     "Items" : {
       "sample" : "./samples/endpoints/items.js",
-      "docs" : "https://developer.xero.com/documentation/api/items"
+      "docs" : "https://developer.xero.com/documentation/api/items",
+      "subscribe" : true
     },
     "Journals" : {
       "sample" : "./samples/endpoints/journals.js",
-      "docs" : "https://developer.xero.com/documentation/api/journals"
+      "docs" : "https://developer.xero.com/documentation/api/journals",
+      "subscribe" : true
     },
     "ManualJournals" : {
       "sample" : "./samples/endpoints/manualjournals.js",
-      "docs" : "https://developer.xero.com/documentation/api/manualjournals"
+      "docs" : "https://developer.xero.com/documentation/api/manualjournals",
+      "subscribe" : true
     },
     "Organisation" : {
       "sample" : "./samples/endpoints/organisation.js",
@@ -117,11 +126,13 @@
     },
     "Payments" : {
       "sample" : "./samples/endpoints/payments.js",
-      "docs" : "https://developer.xero.com/documentation/api/payments"
+      "docs" : "https://developer.xero.com/documentation/api/payments",
+      "subscribe" : true
     },
     "Receipts" : {
       "sample" : "./samples/endpoints/receipts.js",
-      "docs" : "https://developer.xero.com/documentation/api/receipts"
+      "docs" : "https://developer.xero.com/documentation/api/receipts",
+      "subscribe" : true
     },
     "RepeatingInvoices" : {
       "sample" : "./samples/endpoints/repeatinginvoices.js",
@@ -141,11 +152,13 @@
     },
     "Types" : {
       "sample" : "./samples/endpoints/types.js",
-      "docs" : "https://developer.xero.com/documentation/api/types"
+      "docs" : "https://developer.xero.com/documentation/api/types",
+      "subscribe" : true
     },
     "Users" : {
       "sample" : "./samples/endpoints/users.js",
-      "docs" : "https://developer.xero.com/documentation/api/users"
+      "docs" : "https://developer.xero.com/documentation/api/users",
+      "subscribe" : true
     }
     
   }
