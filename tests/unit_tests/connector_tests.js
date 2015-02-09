@@ -118,7 +118,7 @@ describe('XeroConnector', function () {
       });
       it('calls underlying auth library', function () {
         return expect(OAuth.prototype._performSecureRequest)
-          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'PUT', 'https://api.xero.com/api.xro/2.0/contacts', null, 'xml=data', 'application/x-www-form-urlencoded');
+          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'PUT', 'https://api.xero.com/api.xro/2.0/contacts', null, 'data', 'application/xml');
       });
       it('returns json', function () {
         return expect(result)
@@ -149,7 +149,7 @@ describe('XeroConnector', function () {
       });
       it('calls underlying auth library', function () {
         return expect(OAuth.prototype._performSecureRequest)
-          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'POST', 'https://api.xero.com/api.xro/2.0/contacts', null, 'xml=data', 'application/x-www-form-urlencoded');
+          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'POST', 'https://api.xero.com/api.xro/2.0/contacts', null, 'data', 'application/xml');
       });
       it('returns json', function () {
         return expect(result)
