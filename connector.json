@@ -5,7 +5,7 @@
   "auth_types" : {
     "Private": {
       "setup_help": "./samples/private-setup-help.md",
-      "requires_signing" : false
+      "requires_signing" : true
     },
     "Public": {
       "setup_help": "./samples/public-setup-help.md",
