@@ -246,7 +246,6 @@ describe('Poll', function () {
         });
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
-            console.log('subscription:',sub);
             expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
           });
         });
