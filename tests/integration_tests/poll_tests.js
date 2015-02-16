@@ -80,7 +80,7 @@ describe('Poll Integration', function () {
               _response = 'done';
               done();
             });
-            _subscription.eventEmitter.on('connectorKey:modified:user', function (user) {
+            _subscription.eventEmitter.on('connectorKey:new:user', function (user) {
               _user = user;
             });
             return new Poll(_app.toObject(), _subscription, _conn);
@@ -101,7 +101,7 @@ describe('Poll Integration', function () {
           expect(_response)
             .to.eql('done');
         });
-        it('emits a connectorKey:modified:user event', function () {
+        it('emits a connectorKey:new:user event', function () {
            /* jshint -W030 */
           expect(_user).to.exist;
           /* jshint +W030 */
