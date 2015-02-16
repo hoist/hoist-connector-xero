@@ -131,6 +131,8 @@ describe('Poll', function () {
             .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
             .to.eql('/' + _subscription.endpoints[2]);
+          expect(XeroConnector.prototype.get.lastCall.args[0])
+            .to.eql('/' + _subscription.endpoints[3]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -233,6 +235,8 @@ describe('Poll', function () {
             .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
             .to.eql('/' + _subscription.endpoints[2]);
+          expect(XeroConnector.prototype.get.lastCall.args[0])
+            .to.eql('/' + _subscription.endpoints[3]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -242,6 +246,7 @@ describe('Poll', function () {
         });
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
+            console.log('subscription:',sub);
             expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
           });
         });
@@ -364,6 +369,8 @@ describe('Poll', function () {
             .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
             .to.eql('/' + _subscription.endpoints[2]);
+          expect(XeroConnector.prototype.get.lastCall.args[0])
+            .to.eql('/' + _subscription.endpoints[3]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -474,6 +481,8 @@ describe('Poll', function () {
             .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
             .to.eql('/' + _subscription.endpoints[2]);
+          expect(XeroConnector.prototype.get.lastCall.args[0])
+            .to.eql('/' + _subscription.endpoints[3]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -584,6 +593,8 @@ describe('Poll', function () {
             .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
             .to.eql('/' + _subscription.endpoints[2]);
+          expect(XeroConnector.prototype.get.lastCall.args[0])
+            .to.eql('/' + _subscription.endpoints[3]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -680,6 +691,8 @@ describe('Poll', function () {
             .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
             .to.eql('/' + _subscription.endpoints[2]);
+          expect(XeroConnector.prototype.get.lastCall.args[0])
+            .to.eql('/' + _subscription.endpoints[3]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -787,6 +800,8 @@ describe('Poll', function () {
             .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
             .to.eql('/' + _subscription.endpoints[2]);
+          expect(XeroConnector.prototype.get.lastCall.args[0])
+            .to.eql('/' + _subscription.endpoints[3]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
@@ -893,6 +908,8 @@ describe('Poll', function () {
             .to.eql('/' + _subscription.endpoints[1]);
           expect(XeroConnector.prototype.get.thirdCall.args[0])
             .to.eql('/' + _subscription.endpoints[2]);
+          expect(XeroConnector.prototype.get.lastCall.args[0])
+            .to.eql('/' + _subscription.endpoints[3]);
         });
         it('calls Connector#get with the correct header', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
