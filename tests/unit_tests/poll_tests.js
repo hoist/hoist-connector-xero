@@ -142,11 +142,18 @@ describe('Poll', function () {
         });
         it('sets the lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
-            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
+            /* jshint -W030 */
+            expect(sub.meta).to.not.exist;
+            /* jshint +W030 */
           });
         });
       });
       describe('with results from Xero', function () {
+        var _moment = moment();
+        var _momentInvoice = _moment.utc().format();
+        var _momentContact = _moment.subtract(1, 'day').utc().format();
+        var _momentUser = _moment.subtract(1, 'day').utc().format();
+        var _momentPayment = _moment.subtract(1, 'day').utc().format();
         before(function () {
           return new Model.Subscription({
               _id: 'subscriptionId',
@@ -168,13 +175,15 @@ describe('Poll', function () {
               }));
               XeroConnector.prototype.get.onCall(1).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentInvoice,
                   Contacts: {
-                    Contact: 'contact'
+                    Contact: [{UpdatedDateUTC: _momentPayment}, {UpdatedDateUTC: _momentContact}, {UpdatedDateUTC: _momentUser}]
                   }
                 }
               }));
               XeroConnector.prototype.get.onCall(2).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentUser,
                   Users: {
                     User: 'user'
                   }
@@ -182,36 +191,9 @@ describe('Poll', function () {
               }));
               XeroConnector.prototype.get.onCall(3).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentInvoice,
                   Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(4).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(5).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(6).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(7).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
+                    Payment: {UpdatedDateUTC: _momentPayment}
                   }
                 }
               }));
@@ -244,9 +226,12 @@ describe('Poll', function () {
           expect(XeroConnector.prototype.get.secondCall.args[1])
             .to.eql(_header);
         });
-        it('sets the lastPoll on the subscription.meta for each endpoint', function () {
+        it('sets the correct lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
-            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
+            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentInvoice);
+            expect(sub.meta.Contacts.lastPolled).to.eql(_momentContact);
+            expect(sub.meta.Users.lastPolled).to.eql(_momentUser);
+            expect(sub.meta.Payments.lastPolled).to.eql(_momentPayment);
           });
         });
       });
@@ -377,16 +362,21 @@ describe('Poll', function () {
           expect(XeroConnector.prototype.get.secondCall.args[1])
             .to.eql({});
         });
-        it('sets the lastPoll on the subscription.meta for each endpoint', function () {
+        it('does not change the lastPolled', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
-            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
+            expect(sub.meta.Invoices.lastPolled).to.eql(_momentNow);
           });
         });
       });
       describe('with results from Xero', function () {
-        var _momentNow = moment.utc().format();
+        var _moment = moment();
+        var _momentInvoice = _moment.utc().format();
+        var _momentPoll = _moment.subtract(1, 'day').utc().format();
+        var _momentContact = _moment.subtract(1, 'day').utc().format();
+        var _momentUser = _moment.subtract(1, 'day').utc().format();
+        var _momentPayment = _moment.subtract(1, 'day').utc().format();
         var _header = {
-          'If-Modified-Since': _momentNow
+          'If-Modified-Since': _momentPoll
         };
         before(function () {
           return new Model.Subscription({
@@ -397,7 +387,16 @@ describe('Poll', function () {
               endpoints: ['Invoices', 'Contacts', 'Users', 'Payments'],
               meta: {
                 Invoices: {
-                  lastPolled: _momentNow
+                  lastPolled: _momentPoll
+                },
+                Contacts: {
+                  lastPolled: _momentPoll
+                },
+                Users: {
+                  lastPolled: _momentPoll
+                },
+                Payments: {
+                  lastPolled: _momentPoll
                 }
               }
             }).saveAsync()
@@ -414,13 +413,15 @@ describe('Poll', function () {
               }));
               XeroConnector.prototype.get.onCall(1).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentInvoice,
                   Contacts: {
-                    Contact: 'contact'
+                    Contact: [{UpdatedDateUTC: _momentPayment}, {UpdatedDateUTC: _momentContact}, {UpdatedDateUTC: _momentUser}]
                   }
                 }
               }));
               XeroConnector.prototype.get.onCall(2).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentUser,
                   Users: {
                     User: 'user'
                   }
@@ -428,36 +429,9 @@ describe('Poll', function () {
               }));
               XeroConnector.prototype.get.onCall(3).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentInvoice,
                   Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(4).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(5).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(6).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(7).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
+                    Payment: {UpdatedDateUTC: _momentPayment}
                   }
                 }
               }));
@@ -487,11 +461,14 @@ describe('Poll', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
             .to.eql(_header);
           expect(XeroConnector.prototype.get.secondCall.args[1])
-            .to.eql({});
+            .to.eql(_header);
         });
-        it('sets the lastPoll on the subscription.meta for each endpoint', function () {
+        it('sets the correct lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
-            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
+            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentInvoice);
+            expect(sub.meta.Contacts.lastPolled).to.eql(_momentContact);
+            expect(sub.meta.Users.lastPolled).to.eql(_momentUser);
+            expect(sub.meta.Payments.lastPolled).to.eql(_momentPayment);
           });
         });
       });
@@ -603,6 +580,11 @@ describe('Poll', function () {
         });
       });
       describe('with results from Xero', function () {
+        var _moment = moment();
+        var _momentInvoice = _moment.utc().format();
+        var _momentContact = _moment.subtract(1, 'day').utc().format();
+        var _momentUser = _moment.subtract(1, 'day').utc().format();
+        var _momentPayment = _moment.subtract(1, 'day').utc().format();
         before(function () {
           return new Model.Subscription({
               _id: 'subscriptionId',
@@ -625,13 +607,15 @@ describe('Poll', function () {
               }));
               XeroConnector.prototype.get.onCall(1).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentInvoice,
                   Contacts: {
-                    Contact: 'contact'
+                    Contact: [{UpdatedDateUTC: _momentPayment}, {UpdatedDateUTC: _momentContact}, {UpdatedDateUTC: _momentUser}]
                   }
                 }
               }));
               XeroConnector.prototype.get.onCall(2).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentUser,
                   Users: {
                     User: 'user'
                   }
@@ -639,36 +623,9 @@ describe('Poll', function () {
               }));
               XeroConnector.prototype.get.onCall(3).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentInvoice,
                   Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(4).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(5).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(6).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(7).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
+                    Payment: {UpdatedDateUTC: _momentPayment}
                   }
                 }
               }));
@@ -698,6 +655,14 @@ describe('Poll', function () {
             .to.eql(_header);
           expect(XeroConnector.prototype.get.secondCall.args[1])
             .to.eql(_header);
+        });
+        it('sets the correct lastPoll on the subscription.meta for each endpoint', function () {
+          return Model.Subscription.findOneAsync().then(function (sub) {
+            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentInvoice);
+            expect(sub.meta.Contacts.lastPolled).to.eql(_momentContact);
+            expect(sub.meta.Users.lastPolled).to.eql(_momentUser);
+            expect(sub.meta.Payments.lastPolled).to.eql(_momentPayment);
+          });
         });
       });
     });
@@ -815,9 +780,14 @@ describe('Poll', function () {
         });
       });
       describe('with results from Xero', function () {
-        var _momentNow = moment.utc().format();
+        var _moment = moment();
+        var _momentInvoice = _moment.utc().format();
+        var _momentPoll = _moment.subtract(1, 'day').utc().format();
+        var _momentContact = _moment.subtract(1, 'day').utc().format();
+        var _momentUser = _moment.subtract(1, 'day').utc().format();
+        var _momentPayment = _moment.subtract(1, 'day').utc().format();
         var _header = {
-          'If-Modified-Since': _momentNow
+          'If-Modified-Since': _momentPoll
         };
         before(function () {
           return new Model.Subscription({
@@ -828,7 +798,16 @@ describe('Poll', function () {
               endpoints: ['Invoices', 'Contacts', 'Users', 'Payments'],
               meta: {
                 Invoices: {
-                  lastPolled: _momentNow
+                  lastPolled: _momentPoll
+                },
+                Contacts: {
+                  lastPolled: _momentPoll
+                },
+                Users: {
+                  lastPolled: _momentPoll
+                },
+                Payments: {
+                  lastPolled: _momentPoll
                 }
               }
             }).saveAsync()
@@ -845,13 +824,15 @@ describe('Poll', function () {
               }));
               XeroConnector.prototype.get.onCall(1).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentInvoice,
                   Contacts: {
-                    Contact: 'contact'
+                    Contact: [{UpdatedDateUTC: _momentPayment}, {UpdatedDateUTC: _momentContact}, {UpdatedDateUTC: _momentUser}]
                   }
                 }
               }));
               XeroConnector.prototype.get.onCall(2).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentUser,
                   Users: {
                     User: 'user'
                   }
@@ -859,36 +840,9 @@ describe('Poll', function () {
               }));
               XeroConnector.prototype.get.onCall(3).returns(BBPromise.resolve({
                 Response: {
+                  DateTimeUTC: _momentInvoice,
                   Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(4).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(5).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(6).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
-                  }
-                }
-              }));
-              XeroConnector.prototype.get.onCall(7).returns(BBPromise.resolve({
-                Response: {
-                  Payments: {
-                    Payment: 'payment'
+                    Payment: {UpdatedDateUTC: _momentPayment}
                   }
                 }
               }));
@@ -914,11 +868,14 @@ describe('Poll', function () {
           expect(XeroConnector.prototype.get.firstCall.args[1])
             .to.eql(_header);
           expect(XeroConnector.prototype.get.secondCall.args[1])
-            .to.eql({});
+            .to.eql(_header);
         });
-        it('sets the lastPoll on the subscription.meta for each endpoint', function () {
+        it('sets the correct lastPoll on the subscription.meta for each endpoint', function () {
           return Model.Subscription.findOneAsync().then(function (sub) {
-            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentNow);
+            expect(sub.meta.Invoices.lastPolled).to.be.at.least(_momentInvoice);
+            expect(sub.meta.Contacts.lastPolled).to.eql(_momentContact);
+            expect(sub.meta.Users.lastPolled).to.eql(_momentUser);
+            expect(sub.meta.Payments.lastPolled).to.eql(_momentPayment);
           });
         });
       });

@@ -55,8 +55,7 @@
     },
     "BankStatements" : {
       "sample" : "./samples/endpoints/bankstatements.js",
-      "docs" : "https://developer.xero.com/documentation/api/bankstatements",
-      "subscribe" : true
+      "docs" : "https://developer.xero.com/documentation/api/bankstatements"
     },
     "BankTransactions" : {
       "sample" : "./samples/endpoints/banktransactions.js",
@@ -152,8 +151,7 @@
     },
     "Types" : {
       "sample" : "./samples/endpoints/types.js",
-      "docs" : "https://developer.xero.com/documentation/api/types",
-      "subscribe" : true
+      "docs" : "https://developer.xero.com/documentation/api/types"
     },
     "Users" : {
       "sample" : "./samples/endpoints/users.js",
