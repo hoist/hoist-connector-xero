@@ -8,7 +8,7 @@ var Model = require('hoist-model');
 var mongoose = BBPromise.promisifyAll(Model._mongoose);
 var SubscriptionController = require('../fixtures/subscription_controller');
 
-describe('Poll Integration', function () {
+describe.skip('Poll Integration', function () {
   before(function () {
     return mongoose.connectAsync(config.get('Hoist.mongo.db'));
   });
