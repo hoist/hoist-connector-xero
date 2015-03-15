@@ -1,7 +1,7 @@
 #Adding a Public Xero Connector
-1. Log in to [https://api.xero.com/](https://api.xero.com/)
+1. Log in to [https://app.xero.com/](https://app.xero.com/)
 2. Click the *'My Applications'* tab
-3. Select *'Private - just for use with my own organisation'*
-4. Copy and paste the certificate here into the box *'X509 Public Key Certificate'*
+3. Select *'Public - for use with any organisation that authorises you'*
+4. Set the OAuth callback domain to *bouncer.hoist.io*
 5. Click *'Save'*
-6. When it successfully saves the certificate, it will return a page with 'OAuth Credentials' on the right. Copy both *'Consumer Key'* and *'Consumer Secret'* into the boxes on this page.\nClick *'Save and Verify'*
+6. When it successfully saves, it will return a page with 'OAuth Credentials' on the right. Copy both *'Consumer Key'* and *'Consumer Secret'* into the boxes on this page.
