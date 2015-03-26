@@ -5,11 +5,21 @@
   "auth_types" : {
     "Private": {
       "setup_help": "./samples/private-setup-help.md",
-      "requires_signing" : false
+      "requires_signing" : false,
+      "features" : [
+        "A 'Private' Xero Connection",
+        "Access one Xero Account",
+        "No auth steps"
+      ]
     },
     "Public": {
       "setup_help": "./samples/public-setup-help.md",
-      "requires_signing" : true
+      "requires_signing" : true,
+      "features" : [
+        "A 'Public' Xero Connection",
+        "Access multiple Xero Accounts",
+        "Hoist handles the OAuth"
+      ]
     },
    "Partner": {
       "setup_help": "./samples/partner-setup-help.md",
