@@ -50,6 +50,12 @@
     "description": "Private Key",
     "for_types": ["Private"],
     "required": true
+  },{
+    "key": "payroll",
+    "type" : "boolean",
+    "description": "Enable Payroll",
+    "for_types": ["Private", "Public", "Partner"],
+    "required": false
   }],
   "samples" : {
     "getting_started" : "./samples/getting-started.js"
