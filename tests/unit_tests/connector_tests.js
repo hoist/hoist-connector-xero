@@ -161,13 +161,84 @@ describe('XeroConnector', function () {
       });
     });
   });
-  describe('setup', function() {
-    describe('generating defaults', function() {
-      describe('Private connector', function() {
+  describe('#getUrl', function () {
+    describe('with private auth', function () {
+      var url;
+      describe('with runscope on', function () {
+        before(function () {
+          var connector = new XeroConnector({
+            privateKey: 'privateKey',
+            publicKey: 'publicKey',
+            consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',
+            consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
+            authType: 'Private',
+            runscopeBucket: 'bucket'
+          });
+          url = connector._getUrl();
+        });
+        it('should return runscope url', function () {
+          expect(url).to.eql('https://api-xero-com-bucket.runscope.net/api.xro/2.0');
+        });
+
+        describe('without runscope', function () {
+
+          before(function () {
+            var connector = new XeroConnector({
+              privateKey: 'privateKey',
+              publicKey: 'publicKey',
+              consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',
+              consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
+              authType: 'Private'
+            });
+            url = connector._getUrl();
+          });
+          it('should return standard url', function () {
+            expect(url).to.eql('https://api.xero.com/api.xro/2.0');
+          });
+        });
+      });
+      describe('with partner auth', function () {
+        describe('with runscope on', function () {
+          before(function () {
+            var connector = new XeroConnector({
+              privateKey: 'privateKey',
+              publicKey: 'publicKey',
+              consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',
+              consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
+              authType: 'Partner',
+              runscopeBucket: 'bucket'
+            });
+            url = connector._getUrl();
+          });
+          it('should return standard url', function () {
+            expect(url).to.eql('https://api-partner.network.xero.com/api.xro/2.0');
+          });
+        });
+        describe('without runscope', function () {
+          before(function () {
+            var connector = new XeroConnector({
+              privateKey: 'privateKey',
+              publicKey: 'publicKey',
+              consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',
+              consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
+              authType: 'Partner'
+            });
+            url = connector._getUrl();
+          });
+          it('should return standard url', function () {
+            expect(url).to.eql('https://api-partner.network.xero.com/api.xro/2.0');
+          });
+        });
+      });
+    });
+  });
+  describe('setup', function () {
+    describe('generating defaults', function () {
+      describe('Private connector', function () {
         var settings;
         before(function (done) {
           XeroConnector.defaultSettings('Private')
-            .then(function(_settings) {
+            .then(function (_settings) {
               settings = _settings;
               done();
             });
@@ -177,11 +248,11 @@ describe('XeroConnector', function () {
             .to.have.property('publicKey');
         });
       });
-      describe('Public connector', function() {
+      describe('Public connector', function () {
         var settings;
         before(function (done) {
           XeroConnector.defaultSettings('Public')
-            .then(function(_settings) {
+            .then(function (_settings) {
               settings = _settings;
               done();
             });
