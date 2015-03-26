@@ -16,8 +16,10 @@ describe.skip('XeroConnector', function () {
       var connector = new XeroConnector({
         privateKey: privateKey,
         publicKey: publicKey,
+        authType:'Private',
         consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',
-        consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38'
+        consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
+        runscopeBucket:'8yi5mmi5rcwk'
       });
       response = connector.get('/contacts');
     });

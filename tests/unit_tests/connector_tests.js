@@ -174,10 +174,10 @@ describe('XeroConnector', function () {
             authType: 'Private',
             runscopeBucket: 'bucket'
           });
-          url = connector._getUrl();
+          url = connector._getUrl('/contacts');
         });
         it('should return runscope url', function () {
-          expect(url).to.eql('https://api-xero-com-bucket.runscope.net/api.xro/2.0');
+          expect(url).to.eql('https://api-xero-com-bucket.runscope.net/api.xro/2.0/contacts');
         });
 
         describe('without runscope', function () {
@@ -190,10 +190,10 @@ describe('XeroConnector', function () {
               consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
               authType: 'Private'
             });
-            url = connector._getUrl();
+            url = connector._getUrl('/contacts');
           });
           it('should return standard url', function () {
-            expect(url).to.eql('https://api.xero.com/api.xro/2.0');
+            expect(url).to.eql('https://api.xero.com/api.xro/2.0/contacts');
           });
         });
       });
@@ -208,10 +208,10 @@ describe('XeroConnector', function () {
               authType: 'Partner',
               runscopeBucket: 'bucket'
             });
-            url = connector._getUrl();
+            url = connector._getUrl('/contacts');
           });
           it('should return standard url', function () {
-            expect(url).to.eql('https://api-partner.network.xero.com/api.xro/2.0');
+            expect(url).to.eql('https://api-partner.network.xero.com/api.xro/2.0/contacts');
           });
         });
         describe('without runscope', function () {
@@ -223,10 +223,10 @@ describe('XeroConnector', function () {
               consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',
               authType: 'Partner'
             });
-            url = connector._getUrl();
+            url = connector._getUrl('/contacts');
           });
           it('should return standard url', function () {
-            expect(url).to.eql('https://api-partner.network.xero.com/api.xro/2.0');
+            expect(url).to.eql('https://api-partner.network.xero.com/api.xro/2.0/contacts');
           });
         });
       });
