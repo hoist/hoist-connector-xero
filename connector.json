@@ -30,7 +30,7 @@
     "key": "consumerKey",
     "type" : "text",
     "description": "Consumer Token",
-    "for_types": ["Private", "Public"],
+    "for_types": ["Private", "Public", "Partner"],
     "required": true
   },{
     "key": "consumerSecret",
@@ -42,13 +42,13 @@
     "key": "publicKey",
     "type" : "longtext",
     "description": "Public Key",
-    "for_types": ["Private"],
+    "for_types": ["Private", "Partner"],
     "required": true
   },{
     "key": "privateKey",
     "type" : "hidden",
     "description": "Private Key",
-    "for_types": ["Private"],
+    "for_types": ["Private", "Partner"],
     "required": true
   },{
     "key": "payroll",
