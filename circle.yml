@@ -9,6 +9,9 @@ general:
     - coverage/**/*
     - log/*.log
     - npm-debug.log
+checkout:
+  post:
+    - echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
 deployment:
   production:
     branch: master
