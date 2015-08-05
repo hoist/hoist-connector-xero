@@ -31,7 +31,7 @@ test:
     - docker kill hoist-connector-xero-test; true;
     - docker rm hoist-connector-xero-test; true;
     - docker run -d --name mongodb mongo
-    - docker run -t --link mongodb:db --name hoist-connector-xero-test --entrypoint gulp hoist/connector-xero:${CIRCLE_BRANCH//feature\//} test
+    - docker run -t --link mongodb:db --name hoist-connector-xero-test --entrypoint gulp quay.io/hoist/connector-xero:${CIRCLE_BRANCH//feature\//} test
   post:
     - docker cp hoist-connector-xero-test:/usr/src/app/coverage ~/
 general:
