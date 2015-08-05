@@ -14,3 +14,6 @@ ExecStop=/usr/bin/docker stop xero-connector-deploy
 ExecStopPost=-/usr/bin/docker kill xero-connector-deploy
 ExecStopPost=-/usr/bin/docker rm xero-connector-deploy
 TimeoutStartSec=30m
+
+[X-Fleet]
+MachineMetadata=container_type=web
