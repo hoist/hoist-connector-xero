@@ -36,11 +36,11 @@
     "@hoist/logger": "^1.0.3",
     "bluebird": "^2.3.11",
     "config": "^1.10.0",
-    "hoist-certificate-store": "git+ssh://git@github.com:hoist/hoist-certificate-store",
+    "@hoist/certificate-store": "^1.0.0",
     "lodash": "^2.4.1",
     "moment": "^2.8.4",
     "node-uuid": "^1.4.2",
-    "oauth": "git://github.com/hoist/node-oauth",
+    "@hoist/oauth": "^1.0.0",
     "validator": "^3.22.2",
     "xml2js": "^0.4.4"
   }

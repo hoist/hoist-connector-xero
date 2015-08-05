@@ -4,7 +4,7 @@ var XeroConnector = require('../../lib/connector');
 var sinon = require('sinon');
 var BBPromise = require('bluebird');
 var expect = require('chai').expect;
-var OAuth = require('oauth').OAuth;
+var OAuth = require('@hoist/oauth').OAuth;
 
 describe('XeroConnector', function () {
   var connector;
