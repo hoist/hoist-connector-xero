@@ -18,7 +18,7 @@ rm -f ${ROOT_CONNECTOR_DIR}/hoist-connector-xero/current
 
 echo "relinking current symlink";
 
-ln -s ${TIMESTAMP} ${ROOT_CONNECTOR_DIR}/hoist-connector-xero/current
+ln -s ${ROOT_CONNECTOR_DIR}/hoist-connector-xero/${TIMESTAMP} ${ROOT_CONNECTOR_DIR}/hoist-connector-xero/current
 
 echo "removing old deploy directories";
 
