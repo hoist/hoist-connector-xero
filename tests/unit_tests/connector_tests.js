@@ -72,7 +72,7 @@ describe('XeroConnector', function () {
       var result;
       var xml = '<result><key>name</key></result>';
       before(function () {
-        sinon.stub(OAuth.prototype, '_performSecureRequest').callsArgWith(8, null, xml, {});
+        sinon.stub(OAuth.prototype, '_performSecureRequest').yields(null, xml, {});
         connector = new XeroConnector({
           privateKey: 'privateKey',
           publicKey: 'publicKey',
