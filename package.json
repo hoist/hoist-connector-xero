@@ -36,7 +36,7 @@
     "@hoist/certificate-store": "^1.0.1",
     "@hoist/errors": "^2.0.2",
     "@hoist/logger": "^1.0.3",
-    "@hoist/oauth": "^2.0.0",
+    "@hoist/oauth": "^1.0.2",
     "bluebird": "^3.3.4",
     "config": "^1.10.0",
     "lodash": "^4.6.1",
