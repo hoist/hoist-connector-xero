@@ -17,13 +17,11 @@ checkout:
     - find . -exec touch -t 201401010000 {} \;
     - for x in $(git ls-tree --full-tree --name-only -r HEAD); do touch -t $(date -d "$(git log -1 --format=%ci "${x}")" +%y%m%d%H%M.%S) "${x}"; done
 dependencies:
-  cache_directories:
-    - "~/docker"
   override:
-    - mkdir -p ~/docker
-    - if [[ -e ~/docker/connector-xero.tar ]]; then docker load -i ~/docker/connector-xero.tar; fi
+    - echo ${DOCKER_CONFIG} > .dockercfg
+    - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+    - docker pull hoist/connector-xero:${CIRCLE_BRANCH//feature\//}
     - docker build -t hoist/connector-xero:${CIRCLE_BRANCH//feature\//} .
-    - docker save "hoist/connector-xero" > ~/docker/connector-xero.tar
 test:
   override:
     - docker kill mongodb; true;
@@ -45,8 +43,6 @@ deployment:
     branch: [master,/feature\/.*/]
     owner: hoist
     commands:
-      - echo ${DOCKER_CONFIG} > .dockercfg
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push hoist/connector-xero:${CIRCLE_BRANCH//feature\//}
 notify:
   webhooks:
