@@ -1,9 +1,9 @@
 'use strict';
-
 var openssl = require('./open_ssl');
 var BBPromise = require('bluebird');
 
-var KeyPairGenerator = function KeyPairGenerator() {};
+var KeyPairGenerator = function () {
+};
 
 KeyPairGenerator.prototype.generate = function (data) {
 
@@ -12,12 +12,13 @@ KeyPairGenerator.prototype.generate = function (data) {
   return new BBPromise(function (resolve, reject) {
 
     openssl.createPrivateKey(1024, "", function (err, privateKey) {
-      if (err) {
+      if(err) {
         reject(err);
       } else {
         resolve(privateKey);
       }
     });
+
   }).then(function (privateKey) {
 
     _privateKey = privateKey;
@@ -30,7 +31,9 @@ KeyPairGenerator.prototype.generate = function (data) {
           resolve(publicKey);
         }
       });
+
     });
+
   }).then(function (publicKey) {
 
     _publicKey = publicKey;
@@ -38,8 +41,9 @@ KeyPairGenerator.prototype.generate = function (data) {
       public: _publicKey,
       private: _privateKey
     };
+
   });
+
 };
 
 module.exports = new KeyPairGenerator();
-//# sourceMappingURL=key_pair_generator.js.map
