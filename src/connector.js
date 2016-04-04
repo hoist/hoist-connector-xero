@@ -8,7 +8,7 @@ var logger = require('@hoist/logger').child({
   cls: 'XeroConnector'
 });
 var path = require('path');
-var authConfigs = require(path.resolve(__dirname, './auth_config.json'));
+var authConfigs = require(path.resolve(__dirname, './auth_config.js'));
 var keyPairGenerator = require('./key_pair_generator');
 var certificateStore = require('@hoist/certificate-store');
 var http = require('http');

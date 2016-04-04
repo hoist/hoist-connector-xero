@@ -1,0 +1,18 @@
+{
+  "coverage": "0%",
+  "expectCount": 5,
+  "actualCount": 0,
+  "files": {
+    "src/views/edit.js": {
+      "expectCount": 5,
+      "actualCount": 0,
+      "undocumentLines": [
+        5,
+        15,
+        6,
+        18,
+        8
+      ]
+    }
+  }
+}

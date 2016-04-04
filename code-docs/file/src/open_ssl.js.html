@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/open_ssl.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <a data-ice="repoURL" href="https://github.com/hoist/hoist-connector-xero.git" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><div data-ice="dirPath" class="nav-dir-path">views</div><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/views/edit.js~EditForm.html">EditForm</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/open_ssl.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/* jshint ignore:start */
+/*
+  &lt;!-- Globals
+*/
+
+var exec = require(&apos;child_process&apos;).exec;
+var fs = require(&apos;fs&apos;);
+var uuid = require(&apos;node-uuid&apos;);
+var validator = require(&apos;validator&apos;);
+/*
+  --&gt;
+  &lt;!-- Local settings
+*/
+
+var binary = &apos;/usr/bin/openssl&apos;;
+var cipher = &apos;aes-256-cbc&apos;;
+var tmpFolder = &apos;/tmp/&apos;;
+
+/*
+  --&gt;
+  &lt;!-- Exports
+*/
+/* istanbul ignore next */
+exports.createPrivateKey = function (keylength, password, callback) {
+  exec(binary + &apos; genrsa &apos; + keylength + &apos; -x509&apos;, function (err, stdout, stderr) {
+    if (err) {
+      return callback(new Error(err));
+    } else {
+      var privateKey;
+      privateKey = stdout.substring(0, stdout.lastIndexOf(&quot;\n&quot;));
+
+      callback(null, privateKey);
+    }
+  });
+};
+
+
+// openssl req -new -x509 -key privatekey.pem -out publickey.cer -days 1825
+// openssl pkcs12 -export -out public_privatekey.pfx -inkey privatekey.pem -in publickey.cer
+/* istanbul ignore next */
+exports.createPublicKey = function (privateKey, data, callback) {
+  var tmpFile = tmpFolder + uuid.v4();
+
+  fs.writeFile(tmpFile, privateKey, function (err) {
+
+    if (err) {
+      return callback(new Error(err));
+    } else {
+
+
+      var tag = Date.now().toString();
+
+      // openssl genrsa -out privatekey.pem 1024
+      // openssl req -new -x509 -key privatekey.pem -out publickey.cer
+      // openssl pkcs12 -export -out public_privatekey.pfx -inkey privatekey.pem -in publickey.cer
+
+      exec(binary + &apos; req -new -x509 -days 1825 -subj &quot;/C=NZ/ST=Wellington/L=Wellington/O=Hoist/OU=&apos; + data.appName + tag + &apos;/CN=app.hoi.io/emailAddress=support@hoistapps.com&quot; -key &apos; + tmpFile, function (err, stdout, stderr) {
+        if (err) {
+          return callback(new Error(err));
+        } else {
+          var publicKey;
+          publicKey = stdout.substring(0, stdout.lastIndexOf(&quot;\n&quot;));
+
+          callback(null, publicKey);
+
+          fs.unlink(tmpFile, function (err) {
+            if (err) {
+              throw err;
+            }
+          });
+        }
+      });
+    }
+  });
+};
+
+/* istanbul ignore next */
+exports.encryptText = function (decText, password, base64, callback) {
+  var tmpFile = tmpFolder + uuid.v4();
+
+  if (base64 == true) {
+    var base = &apos;-base64&apos;;
+  } else {
+    var base = &apos;&apos;;
+  }
+
+  fs.writeFile(tmpFile, decText, function (err) {
+    if (err) {
+      return callback(new Error(err));
+    } else {
+      var cmdstring = binary + &apos; enc -&apos; + cipher + &apos; -salt &apos; + base + &apos; -in &apos; + tmpFile + &apos; -pass pass:&apos; + password;
+
+      exec(cmdstring, function (err, stdout, stderr) {
+        if (err) {
+          return callback(new Error(err));
+        } else {
+          fs.writeFile(tmpFile + &apos;.out&apos;, stdout, function (err) {
+            if (err) {
+              return callback(new Error(err));
+            } else {
+              var encText;
+              encText = stdout.substring(0, stdout.lastIndexOf(&quot;\n&quot;));
+
+              callback(null, encText);
+
+              fs.unlink(tmpFile, function (err) {
+                if (err) {
+                  throw err;
+                }
+              });
+              fs.unlink(tmpFile + &apos;.out&apos;, function (err) {
+                if (err) {
+                  throw err;
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+};
+
+/* istanbul ignore next */
+exports.decryptText = function (encText, password, base64, callback) {
+  var tmpFile = tmpFolder + uuid.v4();
+
+  if (base64 == true) {
+    var base = &apos;-base64&apos;;
+  } else {
+    var base = &apos;&apos;;
+  }
+
+  fs.writeFile(tmpFile, encText + &quot;\n&quot;, function (err) {
+    if (err) {
+      return callback(new Error(err));
+    } else {
+
+      var cmdstring = binary + &apos; enc -d -&apos; + cipher + &apos; -salt &apos; + base + &apos; -in &apos; + tmpFile + &apos; -pass pass:&apos; + password;
+
+      exec(cmdstring, function (err, stdout, stderr) {
+        if (err) {
+          return callback(new Error(err));
+        } else {
+          console.log(stdout);
+          callback(null, stdout);
+
+          fs.unlink(tmpFile, function (err) {
+            if (err) {
+              throw err;
+            }
+          });
+        }
+      })
+    }
+  });
+};
+
+/* istanbul ignore next */
+exports.randomString = function (length, base64, callback) {
+  if (base64 == true) {
+    var base = &apos;-base64&apos;;
+  } else {
+    var base = &apos;&apos;;
+  }
+
+  if (!length) {
+    var length = 128;
+  }
+
+  exec(binary + &apos; rand &apos; + base + &apos; &apos; + length, function (err, stdout, stderr) {
+    if (err) {
+      return callback(new Error(error));
+    } else {
+      var rand;
+      rand = stdout.substring(0, stdout.lastIndexOf(&quot;\n&quot;));
+
+      callback(null, rand);
+    }
+  });
+};
+
+/* istanbul ignore next */
+exports.encryptMessage = function (publicKey, message, base64, callback) {
+  if (base64 == true) {
+    var base = &apos;| base64&apos;;
+  } else {
+    var base = &apos;&apos;;
+  }
+
+  var tmpKey = tmpFolder + uuid.v4();
+  var tmpFile = tmpFolder + uuid.v4();
+
+  fs.writeFile(tmpKey, publicKey, function (err) {
+    if (err) {
+      return callback(new Error(err));
+    } else {
+      fs.writeFile(tmpFile, message, function (err) {
+        if (err) {
+          return callback(new Error(err));
+        } else {
+          var cmdstring = binary + &apos; rsautl -encrypt -pubin -inkey &apos; + tmpKey + &apos; -in &apos; + tmpFile + base;
+
+          exec(cmdstring, function (err, stdout, stderr) {
+            if (err) {
+              return callback(new Error(err));
+            } else {
+              encMsg = stdout.substring(0, stdout.lastIndexOf(&quot;\n&quot;));
+
+              callback(null, encMsg);
+
+              fs.unlink(tmpFile, function (err) {
+                if (err) {
+                  throw err;
+                }
+              });
+              fs.unlink(tmpKey, function (err) {
+                if (err) {
+                  throw err;
+                }
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+};
+
+/* istanbul ignore next */
+exports.decryptMessage = function (privateKey, encMsg, base64, callback) {
+  if (base64 == true) {
+    var base = &apos;base64 -d &apos;
+  } else {
+    var base = &apos;&apos;;
+  }
+
+  var tmpKey = tmpFolder + uuid.v4();
+  var tmpFile = tmpFolder + uuid.v4();
+
+  fs.writeFile(tmpKey, privateKey, function (err) {
+    if (err) {
+      return callback(new Error(err));
+    } else {
+      fs.writeFile(tmpFile, encMsg, function (err) {
+        if (err) {
+          return callback(new Error(err));
+        } else {
+          var cmdstring = base + tmpFile + &apos; &gt; &apos; + tmpFile + &apos;.enc ; &apos; + binary + &apos; rsautl -decrypt -inkey &apos; + tmpKey + &apos; -in &apos; + tmpFile + &apos;.enc&apos;;
+
+          exec(cmdstring, function (err, stdout, stderr) {
+            if (err) {
+              return callback(new Error(err));
+            } else {
+              decMsg = stdout + &quot;\n&quot;;
+
+              callback(null, decMsg);
+
+              fs.unlink(tmpFile, function (err) {
+                if (err) throw err;
+              });
+              fs.unlink(tmpFile + &apos;.enc&apos;, function (err) {
+                if (err) throw err;
+              });
+              fs.unlink(tmpKey, function (err) {
+                if (err) throw err;
+              });
+            }
+          });
+        }
+      });
+    }
+  });
+};
+/* jshint ignore:end */</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.6)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

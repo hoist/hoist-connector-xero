@@ -1,4 +1,4 @@
-{
+module.exports = {
   "Public": {
     "url": "https://api.xero.com/api.xro/2.0",
     "payroll" : "https://api.xero.com/payroll.xro/1.0",
