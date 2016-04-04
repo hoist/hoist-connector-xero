@@ -1,5 +1,3 @@
-'use strict';
-
 /* jshint ignore:start */
 /*
   <!-- Globals
@@ -36,6 +34,7 @@ exports.createPrivateKey = function (keylength, password, callback) {
   });
 };
 
+
 // openssl req -new -x509 -key privatekey.pem -out publickey.cer -days 1825
 // openssl pkcs12 -export -out public_privatekey.pfx -inkey privatekey.pem -in publickey.cer
 /* istanbul ignore next */
@@ -47,6 +46,7 @@ exports.createPublicKey = function (privateKey, data, callback) {
     if (err) {
       return callback(new Error(err));
     } else {
+
 
       var tag = Date.now().toString();
 
@@ -151,7 +151,7 @@ exports.decryptText = function (encText, password, base64, callback) {
             }
           });
         }
-      });
+      })
     }
   });
 };
@@ -230,7 +230,7 @@ exports.encryptMessage = function (publicKey, message, base64, callback) {
 /* istanbul ignore next */
 exports.decryptMessage = function (privateKey, encMsg, base64, callback) {
   if (base64 == true) {
-    var base = 'base64 -d ';
+    var base = 'base64 -d '
   } else {
     var base = '';
   }
@@ -273,4 +273,3 @@ exports.decryptMessage = function (privateKey, encMsg, base64, callback) {
   });
 };
 /* jshint ignore:end */
-//# sourceMappingURL=open_ssl.js.map

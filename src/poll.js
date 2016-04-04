@@ -1,5 +1,4 @@
 'use strict';
-
 var _ = require('lodash');
 var Connector = require('./connector');
 var BBPromise = require('bluebird');
@@ -17,6 +16,7 @@ var ConnectorRequiresAuthorizationError = errors.create({
   name: 'ConnectorRequiresAuthorizationError'
 });
 
+
 function XeroPoller(context) {
   logger.debug(context, 'constructed poller');
   this.context = context;
@@ -25,7 +25,7 @@ function XeroPoller(context) {
   this.connector = new Connector(context.settings);
 }
 XeroPoller.prototype = {
-  assertCanPoll: function assertCanPoll() {
+  assertCanPoll: function () {
     return BBPromise.try(function () {
       var frequency = 24 * 60 * this.context.subscription.endpoints.length / apiLimit;
       var lastPolled = this.context.subscription.get('lastPolled');
@@ -41,7 +41,7 @@ XeroPoller.prototype = {
         this.context.subscription.delayTill(moment(lastPolled).add(frequency, 'minutes').toDate());
         throw new APILimitReachedError();
       }
-      if (this.context.settings.authType !== 'Private' && !this.context.authorization) {
+      if (this.context.settings.authType !== 'Private' && !(this.context.authorization)) {
         classLogger.warn({
           subscription: this.context.subscription._id,
           application: this.context.application._id
@@ -54,57 +54,62 @@ XeroPoller.prototype = {
       }
     }, [], this);
   },
-  pollSubscription: function pollSubscription() {
+  pollSubscription: function () {
     return BBPromise.try(function () {
-      classLogger.info('checking if poll can happen');
-      return this.assertCanPoll();
-    }, [], this).bind(this).then(function () {
-      this.context.subscription.set('lastPolled', moment.utc().format());
-    }).then(function () {
-      if (this.context.authorization) {
+        classLogger.info('checking if poll can happen');
+        return this.assertCanPoll();
+      }, [], this)
+      .bind(this)
+      .then(function () {
+        this.context.subscription.set('lastPolled', moment.utc().format());
+      }).then(function () {
+        if (this.context.authorization) {
+          classLogger.info({
+            subscription: this.context.subscription._id,
+            application: this.context.application._id
+          }, 'setting auth');
+          this.connector.authorize(this.context.authorization);
+        } else {
+          classLogger.info({
+            subscription: this.context.subscription._id,
+            application: this.context.application._id
+          }, 'no auth to set');
+        }
+      })
+      .then(function () {
         classLogger.info({
           subscription: this.context.subscription._id,
           application: this.context.application._id
-        }, 'setting auth');
-        this.connector.authorize(this.context.authorization);
-      } else {
+        }, 'generating pollEndpoing promises');
+        return _.map(this.context.subscription.endpoints, _.bind(this.pollEndpoint, this));
+      }).then(function (pollPromises) {
         classLogger.info({
           subscription: this.context.subscription._id,
           application: this.context.application._id
-        }, 'no auth to set');
-      }
-    }).then(function () {
-      classLogger.info({
-        subscription: this.context.subscription._id,
-        application: this.context.application._id
-      }, 'generating pollEndpoing promises');
-      return _.map(this.context.subscription.endpoints, _.bind(this.pollEndpoint, this));
-    }).then(function (pollPromises) {
-      classLogger.info({
-        subscription: this.context.subscription._id,
-        application: this.context.application._id
-      }, 'settling promises');
-      return BBPromise.settle(pollPromises);
-    }).then(function () {
-      classLogger.info({
-        subscription: this.context.subscription._id,
-        application: this.context.application._id
-      }, 'done with poll');
-    }).catch(function (err) {
-      classLogger.error({
-        err: {
-          message: err.message,
-          stack: err.stack
-        },
-        subscription: this.context.subscription._id,
-        application: this.context.application._id
-      }, err.message);
-      if (!(err instanceof APILimitReachedError) && !(err instanceof ConnectorRequiresAuthorizationError)) {
-        logger.alert(err);
-      }
-    });
+        }, 'settling promises');
+        return BBPromise.settle(pollPromises);
+      })
+      .then(function () {
+        classLogger.info({
+          subscription: this.context.subscription._id,
+          application: this.context.application._id
+        }, 'done with poll');
+      }).catch(function (err) {
+        classLogger.error({
+          err: {
+            message: err.message,
+            stack: err.stack
+          },
+          subscription: this.context.subscription._id,
+          application: this.context.application._id
+        }, err.message);
+        if (!(err instanceof APILimitReachedError) && !(err instanceof ConnectorRequiresAuthorizationError)) {
+          logger.alert(err);
+        }
+      });
+
   },
-  pollEndpoint: function pollEndpoint(endpoint) {
+  pollEndpoint: function (endpoint) {
     var singularEndpointName = endpoint.replace(/s$/, '');
     var _lastPoll = this.context.subscription.get(endpoint) ? this.context.subscription.get(endpoint).lastPolled : null;
     var extraHeader = _lastPoll ? {
@@ -119,34 +124,36 @@ XeroPoller.prototype = {
     }, 'polling endpoint');
     var timeNow = moment.utc().format();
     var get = this.connector.get(formattedEndpoint, extraHeader);
-    return get.bind(this).then(function (results) {
-      classLogger.info({
-        subscription: this.context.subscription._id,
-        application: this.context.application._id
-      }, 'got results from endpoint');
-      classLogger.debug({
-        results: results,
-        endpoint: endpoint
-      }, 'got results from endpoint');
-      return this.handleResults(results, endpoint, singularEndpointName, _lastPoll, timeNow);
-    }).catch(function (err) {
-      classLogger.info({
-        subscription: this.context.subscription._id,
-        application: this.context.application._id,
-        error: err.message
-      }, 'error from get request');
-      classLogger.error({
-        err: {
-          message: err.message,
-          stack: err.stack
-        },
-        subscription: this.context.subscription._id,
-        application: this.context.application._id
-      }, err.message);
-      classLogger.error(err);
-    });
+    return get
+      .bind(this)
+      .then(function (results) {
+        classLogger.info({
+          subscription: this.context.subscription._id,
+          application: this.context.application._id
+        }, 'got results from endpoint');
+        classLogger.debug({
+          results: results,
+          endpoint: endpoint
+        }, 'got results from endpoint');
+        return this.handleResults(results, endpoint, singularEndpointName, _lastPoll, timeNow);
+      }).catch(function (err) {
+        classLogger.info({
+          subscription: this.context.subscription._id,
+          application: this.context.application._id,
+          error: err.message
+        }, 'error from get request');
+        classLogger.error({
+          err: {
+            message: err.message,
+            stack: err.stack
+          },
+          subscription: this.context.subscription._id,
+          application: this.context.application._id
+        }, err.message);
+        classLogger.error(err);
+      });
   },
-  handleResults: function handleResults(results, endpoint, singularEndpointName, _lastPoll, timeNow) {
+  handleResults: function (results, endpoint, singularEndpointName, _lastPoll, timeNow) {
     var self = this;
     if (!results.Response[endpoint]) {
       classLogger.info({
@@ -178,44 +185,48 @@ XeroPoller.prototype = {
       subscription: this.context.subscription._id,
       application: this.context.application._id
     }, "mapping results to events");
-    return BBPromise.settle(_.map(mappedResults, _.bind(this.raiseEvent, this))).bind(this).then(function (promises) {
-      var lastPolled = _.reduceRight(entities, function (max, next) {
-        return next.UpdatedDateUTC > max ? next.UpdatedDateUTC : max;
-      }, '');
-      lastPolled = results.Response.DateTimeUTC || lastPolled || timeNow;
-      var endpointData = this.context.subscription.get(endpoint);
-      endpointData.lastPolled = lastPolled;
-      this.context.subscription.set(endpoint, endpointData);
-      return promises;
-    }).catch(function (err) {
-      classLogger.error({
-        err: {
-          message: err.message,
-          stack: err.stack
-        },
-        subscription: this.context.subscription._id,
-        application: this.context.application._id
-      }, err.message);
-    });
+    return BBPromise.settle(_.map(mappedResults, _.bind(this.raiseEvent, this)))
+      .bind(this)
+      .then(function (promises) {
+        var lastPolled = _.reduceRight(entities, function (max, next) {
+          return next.UpdatedDateUTC > max ? next.UpdatedDateUTC : max;
+        }, '');
+        lastPolled = results.Response.DateTimeUTC || lastPolled || timeNow;
+        var endpointData = this.context.subscription.get(endpoint);
+        endpointData.lastPolled = lastPolled;
+        this.context.subscription.set(endpoint, endpointData);
+        return promises;
+      }).catch(function (err) {
+        classLogger.error({
+          err: {
+            message: err.message,
+            stack: err.stack
+          },
+          subscription: this.context.subscription._id,
+          application: this.context.application._id
+        }, err.message);
+      });
   },
-  raiseEvent: function raiseEvent(result) {
+  raiseEvent: function (result) {
     logger.info({
       result: result,
       subscription: this.context.subscription._id,
       application: this.context.application._id
     }, 'raising event');
-    return this.checkIfNew(result).bind(this).then(function (isNew) {
+    return this.checkIfNew(result)
+      .bind(this)
+      .then(function (isNew) {
 
-      var eventName = result.connectorKey + (result.result.Status && result.result.Status === 'DELETED' ? ':deleted:' : isNew ? ':new:' : ':modified:') + result.endpoint.toLowerCase();
-      classLogger.info({
-        eventName: eventName,
-        subscription: this.context.subscription._id,
-        application: this.context.application._id
-      }, 'raising event');
-      return this.emit(eventName, result.result);
-    });
+        var eventName = result.connectorKey + ((result.result.Status && result.result.Status === 'DELETED') ? ':deleted:' : (isNew ? ':new:' : ':modified:')) + result.endpoint.toLowerCase();
+        classLogger.info({
+          eventName: eventName,
+          subscription: this.context.subscription._id,
+          application: this.context.application._id
+        }, 'raising event');
+        return this.emit(eventName, result.result);
+      });
   },
-  checkIfNew: function checkIfNew(result) {
+  checkIfNew: function (result) {
     var isNew = false;
     if (result.result.CreatedDateUTC && moment(result.result.CreatedDateUTC).isAfter(result.lastPoll)) {
       isNew = true;
@@ -244,4 +255,3 @@ module.exports = function (context, raiseMethod) {
   poller.emit = raiseMethod;
   return poller.pollSubscription();
 };
-//# sourceMappingURL=poll.js.map

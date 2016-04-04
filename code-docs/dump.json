@@ -1,0 +1,3194 @@
+[
+  {
+    "__docId__": 0,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "src/auth_config.js",
+    "memberof": null,
+    "longname": "src/auth_config.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "module.exports = {\n  \"Public\": {\n    \"url\": \"https://api.xero.com/api.xro/2.0\",\n    \"payroll\" : \"https://api.xero.com/payroll.xro/1.0\",\n    \"requestTokenUrl\": \"https://api.xero.com/oauth/RequestToken\",\n    \"authorizeUrl\": \"https://api.xero.com/oauth/Authorize\",\n    \"accessTokenUrl\": \"https://api.xero.com/oauth/AccessToken\",\n    \"encryptionType\": \"HMAC-SHA1\",\n    \"requiresConnection\": \"true\",\n    \"requiresSigning\": false\n\n  },\n\n  \"Partner\": {\n    \"url\": \"https://api-partner.network.xero.com/api.xro/2.0\",\n    \"payroll\" : \"https://api.xero.com/payroll.xro/1.0\",\n    \"requestTokenUrl\": \"https://api-partner.network.xero.com/oauth/RequestToken\",\n    \"authorizeUrl\": \"https://api.xero.com/oauth/Authorize\",\n    \"accessTokenUrl\": \"https://api-partner.network.xero.com/oauth/AccessToken\",\n    \"encryption_type\": \"RSA-SHA1\",\n    \"signatureMethod\": \"RSA-SHA1\",\n    \"requiresConnection\": \"true\",\n    \"requiresSigning\": true\n\n  },\n  \"Private\": {\n    \"url\": \"https://api.xero.com/api.xro/2.0\",\n    \"payroll\" : \"https://api.xero.com/payroll.xro/1.0\",\n    \"encryptionType\": \"PLAINTEXT\",\n    \"signatureMethod\": \"RSA-SHA1\",\n    \"requiresConnection\": \"false\",\n    \"requiresSigning\": true\n  }\n}\n"
+  },
+  {
+    "__docId__": 1,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "src/connector.js",
+    "memberof": null,
+    "longname": "src/connector.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "'use strict';\nvar BBPromise = require('bluebird');\nvar xml2js = require('xml2js');\nvar OAuth = require('@hoist/oauth').OAuth;\nvar crypto = require('crypto');\nvar _ = require('lodash');\nvar logger = require('@hoist/logger').child({\n  cls: 'XeroConnector'\n});\nvar path = require('path');\nvar authConfigs = require(path.resolve(__dirname, './auth_config.js'));\nvar keyPairGenerator = require('./key_pair_generator');\nvar certificateStore = require('@hoist/certificate-store');\nvar http = require('http');\nvar https = require('https');\nvar moment = require('moment');\nvar config = require('config');\n\nvar payrollEndpoints = [\"Employees\",\n  \"LeaveApplications\",\n  \"PayItems\",\n  \"PayrollCalendars\",\n  \"PayRuns\",\n  \"Payslip\",\n  \"Settings\",\n  \"SuperFunds\",\n  \"SuperFundProducts\",\n  \"Timesheets\"\n];\n\nfunction XeroConnector(settings) {\n  logger.info({\n      application: settings.applicationId\n    },\n    'creating Xero Connector');\n  logger.debug({\n    settings: settings,\n    authConfigs: authConfigs\n  }, 'constructed xero-connector');\n  this.settings = settings;\n  this.parser = BBPromise.promisifyAll(new xml2js.Parser({\n    explicitArray: false,\n    ignoreAttrs: false,\n    async: true\n  }));\n\n  var authConfig = authConfigs[settings.authType];\n  this.authConfig = authConfig;\n\n  if (authConfig.accessTokenUrl && settings.payroll === true) {\n    authConfig.accessTokenUrl = authConfig.accessTokenUrl + \"?scope=payroll.\" + payrollEndpoints.join(',payroll.');\n  }\n\n  this.auth = BBPromise.promisifyAll(new OAuth(\n    authConfig.requestTokenUrl || null,\n    authConfig.accessTokenUrl || null,\n    settings.consumerKey,\n    settings.consumerSecret,\n    '1.0A',\n    null,\n    authConfig.encryptionType || 'RSA-SHA1'\n  ), {\n    multiArgs: true\n  });\n  if (settings.authType === 'Partner') {\n    this.auth._createClient = _.bind(function (port, hostname, method, path, headers, sslEnabled) {\n      headers = headers || {};\n      headers['user-agent'] = 'Hoist Apps: ' + this.settings.applicationName;\n      var certificates = certificateStore.get('entrust');\n      logger.info({\n\n        application: this.settings.applicationId,\n        cert: certificates.cert.length,\n        key: certificates.key.length\n      }, 'loaded certs');\n      var options = {\n        host: hostname,\n        port: port,\n        path: path,\n        method: method,\n        headers: headers,\n        cert: certificates.cert,\n        key: certificates.key\n      };\n      var httpModel;\n      if (sslEnabled) {\n        httpModel = https;\n      } else {\n        httpModel = http;\n      }\n      return httpModel.request(options);\n    }, this);\n  }\n  /*jshint camelcase: false */\n  this.auth._authorize_callback = 'https://' + config.get('Hoist.domains.bouncer') + '/bounce';\n  logger.info(this.auth._authorize_callback, 'callback domain');\n  if (authConfig.requiresSigning) {\n    this.auth._signatureMethod = authConfig.signatureMethod;\n    this.auth._createSignature = _.bind(function createXeroSignature(signatureBase) {\n\n      logger.info({\n        signatureBase: signatureBase,\n        settings: this.settings\n      }, 'authorization signature');\n      return crypto.createSign(authConfig.signatureMethod)\n        .update(signatureBase)\n        .sign(this.settings.privateKey, \"base64\");\n    }, this);\n  }\n  this.auth._performSecureRequestAsync = BBPromise.promisify(this.auth._performSecureRequest, this.auth,{multiArgs:true});\n  if (this.settings.authType === 'Private') {\n    this.settings.accessKey = this.settings.consumerKey;\n    this.settings.accessSecret = this.settings.consumerSecret;\n  }\n  _.bindAll(this);\n}\n\nXeroConnector.defaultSettings = function (authType) {\n  if (authType === 'Private' || authType === 'Partner') {\n    return keyPairGenerator.generate({\n        stamp: Date.now()\n      })\n      .then(function (keys) {\n        return {\n          publicKey: keys.public,\n          privateKey: keys.private\n        };\n      });\n  }\n  return new BBPromise(function (resolve) {\n    resolve({});\n  });\n};\n\n/* istanbul ignore next */\nXeroConnector.prototype.authorize = function (authorization) {\n  logger.info({\n    application: this.settings.applicationId\n  }, 'authroizing xero connector');\n  this.authorization = authorization;\n  this.settings.accessKey = authorization.get('AccessToken');\n  this.settings.accessSecret = authorization.get('AccessTokenSecret');\n};\n\nXeroConnector.prototype.swapRequestToken = function (requestToken, requestTokenSecret, verifier) {\n  logger.info({\n    application: this.settings.applicationId\n  }, 'swapping request token');\n  return this.auth.getOAuthAccessTokenAsync(requestToken, requestTokenSecret, verifier);\n};\n\nXeroConnector.prototype.generateRequestToken = function () {\n  logger.info('requesting auth token');\n  return this.auth.getOAuthRequestTokenAsync();\n};\n/* istanbul ignore next */\nXeroConnector.prototype.refreshCredentials = function () {\n  var accessToken = this.authorization.get('AccessToken');\n  var accessTokenSecret = this.authorization.get('AccessTokenSecret');\n  /*jshint camelcase: false */\n  return this.auth.getOAuthAccessTokenAsync(accessToken, accessTokenSecret, {\n    oauth_session_handle: this.authorization.get('SessionHandle')\n  }).bind(this).spread(function (accessToken, accessTokenSecret, auth_headers) {\n    logger.debug(auth_headers);\n    logger.info('got request token');\n    this.settings.accessKey = accessToken;\n    this.settings.accessSecret = accessTokenSecret;\n    return this.authorization.set('AccessToken', accessToken)\n      .bind(this)\n      .then(function () {\n        return this.authorization.set('AccessTokenSecret', accessTokenSecret);\n      }).then(function () {\n        if (auth_headers && auth_headers.oauth_session_handle) {\n          var tokenExpiresAt = moment().add(parseInt(auth_headers.oauth_expires_in), 'seconds');\n          var sessionExpiresAt = moment().add(parseInt(auth_headers.oauth_authorization_expires_in), 'seconds');\n          return this.authorization.set('SessionHandle', auth_headers.oauth_session_handle)\n            .bind(this)\n            .then(function () {\n              this.authorization.set('SessionExpiresAt', sessionExpiresAt.toISOString());\n            }).then(function () {\n              this.authorization.set('TokenExpiresAt', tokenExpiresAt.toISOString());\n            });\n        }\n      });\n  });\n};\n\nXeroConnector.prototype.receiveBounce = function (bounce) {\n  logger.debug(this.settings);\n  if (this.settings.authType === 'Public' || this.settings.authType === 'Partner') {\n    if (bounce.get('RequestToken')) {\n      /*jshint camelcase: false */\n      return this.swapRequestToken(bounce.get('RequestToken'), bounce.get('RequestTokenSecret'), bounce.query.oauth_verifier)\n        .spread(function (accessToken, accessTokenSecret, auth_headers) {\n          logger.info(auth_headers);\n          logger.info('got request token');\n          return bounce.delete('RequestToken')\n            .then(function () {\n              return bounce.delete('RequestTokenSecret');\n            }).then(function () {\n              return bounce.set('AccessToken', accessToken);\n            }).then(function () {\n              return bounce.set('AccessTokenSecret', accessTokenSecret);\n            }).then(function () {\n              if (auth_headers && auth_headers.oauth_session_handle) {\n                var tokenExpiresAt = moment().add(parseInt(auth_headers.oauth_expires_in), 'seconds');\n                var sessionExpiresAt = moment().add(parseInt(auth_headers.oauth_authorization_expires_in), 'seconds');\n                return bounce.set('SessionHandle', auth_headers.oauth_session_handle)\n                  .then(function () {\n                    bounce.set('SessionExpiresAt', sessionExpiresAt.toISOString());\n                  }).then(function () {\n                    bounce.set('TokenExpiresAt', tokenExpiresAt.toISOString());\n                  });\n              }\n            }).then(function () {\n              bounce.done();\n            });\n        });\n    } else {\n      return this.generateRequestToken()\n        .bind(this)\n        .spread(function (requestToken, requestTokenSecret) {\n          logger.info('got request token');\n          return bounce.set('RequestToken', requestToken)\n            .bind(this)\n            .then(function () {\n              return bounce.set('RequestTokenSecret', requestTokenSecret);\n            })\n            .bind(this)\n            .then(function () {\n              bounce.redirect('https://api.xero.com/oauth/Authorize?oauth_token=' + requestToken);\n            });\n        });\n    }\n  }\n  bounce.done();\n};\n\nXeroConnector.prototype.get = function get(url, extraHeader) {\n  logger.info({\n    application: this.settings.applicationId,\n  }, 'inside hoist-connector-xero.get');\n  return this.request('GET', url, null, extraHeader);\n};\n\nXeroConnector.prototype.put = function put(url, data) {\n  logger.info({\n    application: this.settings.applicationId,\n  }, 'inside hoist-connector-xero.put');\n  return this.request('PUT', url, data);\n};\n\nXeroConnector.prototype.post = function post(url, data) {\n  logger.info('inside hoist-connector-xero.post');\n  return this.request('POST', url, data);\n};\n\n\nXeroConnector.prototype._getUrl = function (path) {\n  logger.info({\n    path: path\n  }, 'generating url for xero');\n  var url = this.authConfig.url + path;\n\n  /* Payroll */\n  var comparisonPath = path;\n  if (path[0] === '/') {\n    comparisonPath = path.substr(1);\n  }\n  comparisonPath = comparisonPath.split('/')[0];\n  if (payrollEndpoints.indexOf(comparisonPath) !== -1) {\n    url = this.authConfig.payroll + path;\n  }\n  /* Payroll */\n\n  if (this.auth._createSignatureBaseOriginal) {\n    this.auth._createSignatureBase = this.auth._createSignatureBaseOrginal;\n    delete this.auth._createSignatureBaseOriginal;\n  }\n  if (this.settings.runscopeBucket && this.settings.authType !== 'Partner') {\n    var uri = require('url').parse(url);\n    delete uri.host;\n    uri.hostname = uri.hostname.replace(/-/g, '--');\n    uri.hostname = uri.hostname.replace(/\\./g, '-');\n    uri.hostname = uri.hostname + '-' + this.settings.runscopeBucket + '.runscope.net';\n    var originalUrl = url;\n    url = require('url').format(uri);\n    this.auth._createSignatureBaseOriginal = this.auth._createSignatureBase;\n    this.auth._createSignatureBase = function (method, u, parameters) {\n      return this._createSignatureBaseOriginal(method, originalUrl, parameters);\n    };\n  }\n  logger.info({\n    url: url\n  }, 'generated url');\n  return url;\n};\nXeroConnector.prototype.request = function request(method, requestPath, data, extraHeader) {\n  var _this = this;\n  var originalArgs = arguments;\n  return BBPromise.resolve()\n    .bind(_this)\n    .then(function () {\n      logger.info({\n        method: method,\n        requestPath: requestPath,\n        data: data,\n        extraHeader: extraHeader\n      }, 'making request');\n      if (_this.settings.authType === 'Partner') {\n        var tokenExpiry = _this.authorization.get('TokenExpiresAt');\n        logger.info({\n          application: _this.settings.applicationId,\n          tokenExpiry: tokenExpiry\n        }, 'token expires');\n        if (tokenExpiry) {\n          tokenExpiry = moment(tokenExpiry);\n          logger.info(moment().subtract(30, 'seconds'));\n          logger.info(tokenExpiry);\n          logger.info(tokenExpiry.isBefore(moment().subtract(30, 'seconds')));\n          if (tokenExpiry.isValid() && tokenExpiry.isBefore(moment().subtract(30, 'seconds'))) {\n            logger.info('about to refresh token');\n\n            return _this.refreshCredentials()\n              .then(function () {\n                return _this.request.apply(_this, originalArgs);\n              });\n          }\n        }\n      }\n      var contentType = 'application/xml';\n      data = data ? data : null;\n\n\n      extraHeader = extraHeader ? extraHeader : null;\n      var url = _this._getUrl(requestPath);\n      logger.info({\n        application: _this.settings.applicationId,\n        method: method,\n        path: requestPath,\n        url: url\n      }, 'inside hoist-connector-xero.request');\n      return _this.auth._performSecureRequestAsync(_this.settings.accessKey, _this.settings.accessSecret, method, url, null, data, contentType, extraHeader)\n        .bind(_this).then(function parseXml(xml) {\n          logger.info({\n            application: _this.settings.applicationId\n          }, 'got response from request');\n          return _this.parser.parseStringAsync(xml);\n        });\n    });\n};\n\n\nmodule.exports = XeroConnector;\n"
+  },
+  {
+    "__docId__": 2,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "BBPromise",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~BBPromise",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 3,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "xml2js",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~xml2js",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 4,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "OAuth",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~OAuth",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 4,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 5,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "crypto",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~crypto",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 6,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "_",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~_",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 6,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 7,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "logger",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~logger",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 7,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 8,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "path",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~path",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 10,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 9,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "authConfigs",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~authConfigs",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 11,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 10,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "keyPairGenerator",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~keyPairGenerator",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 12,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 11,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "certificateStore",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~certificateStore",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 13,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 12,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "http",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~http",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 14,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 13,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "https",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~https",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 15,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 14,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "moment",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~moment",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 16,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 15,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "config",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~config",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 17,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 16,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "payrollEndpoints",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~payrollEndpoints",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 19,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 17,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "XeroConnector",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~XeroConnector",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 31,
+    "undocument": true,
+    "params": [
+      {
+        "name": "settings",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 18,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "defaultSettings",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~defaultSettings",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 118,
+    "undocument": true,
+    "params": [
+      {
+        "name": "authType",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 19,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "authorize",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~authorize",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 136,
+    "undocument": true,
+    "params": [
+      {
+        "name": "authorization",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 20,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "swapRequestToken",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~swapRequestToken",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 145,
+    "undocument": true,
+    "params": [
+      {
+        "name": "requestToken",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "requestTokenSecret",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "verifier",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 21,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "generateRequestToken",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~generateRequestToken",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 152,
+    "undocument": true,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 22,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "refreshCredentials",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~refreshCredentials",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 157,
+    "undocument": true,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 23,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "receiveBounce",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~receiveBounce",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 188,
+    "undocument": true,
+    "params": [
+      {
+        "name": "bounce",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 24,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "get",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~get",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 239,
+    "undocument": true,
+    "params": [
+      {
+        "name": "url",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "extraHeader",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 25,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "put",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~put",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 246,
+    "undocument": true,
+    "params": [
+      {
+        "name": "url",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "data",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 26,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "post",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~post",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 253,
+    "undocument": true,
+    "params": [
+      {
+        "name": "url",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "data",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 27,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "_getUrl",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~_getUrl",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 259,
+    "undocument": true,
+    "params": [
+      {
+        "name": "path",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 28,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "request",
+    "memberof": "src/connector.js",
+    "longname": "src/connector.js~request",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/connector.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 298,
+    "undocument": true,
+    "params": [
+      {
+        "name": "method",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "requestPath",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "data",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "extraHeader",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 29,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "src/key_pair_generator.js",
+    "memberof": null,
+    "longname": "src/key_pair_generator.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "'use strict';\nvar openssl = require('./open_ssl');\nvar BBPromise = require('bluebird');\n\nvar KeyPairGenerator = function () {\n};\n\nKeyPairGenerator.prototype.generate = function (data) {\n\n  var _privateKey, _publicKey;\n\n  return new BBPromise(function (resolve, reject) {\n\n    openssl.createPrivateKey(1024, \"\", function (err, privateKey) {\n      if(err) {\n        reject(err);\n      } else {\n        resolve(privateKey);\n      }\n    });\n\n  }).then(function (privateKey) {\n\n    _privateKey = privateKey;\n    return new BBPromise(function (resolve, reject) {\n\n      openssl.createPublicKey(privateKey, data, function (err, publicKey) {\n        if (err) {\n          reject(err);\n        } else {\n          resolve(publicKey);\n        }\n      });\n\n    });\n\n  }).then(function (publicKey) {\n\n    _publicKey = publicKey;\n    return {\n      public: _publicKey,\n      private: _privateKey\n    };\n\n  });\n\n};\n\nmodule.exports = new KeyPairGenerator();\n"
+  },
+  {
+    "__docId__": 30,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "openssl",
+    "memberof": "src/key_pair_generator.js",
+    "longname": "src/key_pair_generator.js~openssl",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/key_pair_generator.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 31,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "BBPromise",
+    "memberof": "src/key_pair_generator.js",
+    "longname": "src/key_pair_generator.js~BBPromise",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/key_pair_generator.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 32,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "KeyPairGenerator",
+    "memberof": "src/key_pair_generator.js",
+    "longname": "src/key_pair_generator.js~KeyPairGenerator",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/key_pair_generator.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 33,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "generate",
+    "memberof": "src/key_pair_generator.js",
+    "longname": "src/key_pair_generator.js~generate",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/key_pair_generator.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 8,
+    "undocument": true,
+    "params": [
+      {
+        "name": "data",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 34,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "src/open_ssl.js",
+    "memberof": null,
+    "longname": "src/open_ssl.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 6,
+    "content": "/* jshint ignore:start */\n/*\n  <!-- Globals\n*/\n\nvar exec = require('child_process').exec;\nvar fs = require('fs');\nvar uuid = require('node-uuid');\nvar validator = require('validator');\n/*\n  -->\n  <!-- Local settings\n*/\n\nvar binary = '/usr/bin/openssl';\nvar cipher = 'aes-256-cbc';\nvar tmpFolder = '/tmp/';\n\n/*\n  -->\n  <!-- Exports\n*/\n/* istanbul ignore next */\nexports.createPrivateKey = function (keylength, password, callback) {\n  exec(binary + ' genrsa ' + keylength + ' -x509', function (err, stdout, stderr) {\n    if (err) {\n      return callback(new Error(err));\n    } else {\n      var privateKey;\n      privateKey = stdout.substring(0, stdout.lastIndexOf(\"\\n\"));\n\n      callback(null, privateKey);\n    }\n  });\n};\n\n\n// openssl req -new -x509 -key privatekey.pem -out publickey.cer -days 1825\n// openssl pkcs12 -export -out public_privatekey.pfx -inkey privatekey.pem -in publickey.cer\n/* istanbul ignore next */\nexports.createPublicKey = function (privateKey, data, callback) {\n  var tmpFile = tmpFolder + uuid.v4();\n\n  fs.writeFile(tmpFile, privateKey, function (err) {\n\n    if (err) {\n      return callback(new Error(err));\n    } else {\n\n\n      var tag = Date.now().toString();\n\n      // openssl genrsa -out privatekey.pem 1024\n      // openssl req -new -x509 -key privatekey.pem -out publickey.cer\n      // openssl pkcs12 -export -out public_privatekey.pfx -inkey privatekey.pem -in publickey.cer\n\n      exec(binary + ' req -new -x509 -days 1825 -subj \"/C=NZ/ST=Wellington/L=Wellington/O=Hoist/OU=' + data.appName + tag + '/CN=app.hoi.io/emailAddress=support@hoistapps.com\" -key ' + tmpFile, function (err, stdout, stderr) {\n        if (err) {\n          return callback(new Error(err));\n        } else {\n          var publicKey;\n          publicKey = stdout.substring(0, stdout.lastIndexOf(\"\\n\"));\n\n          callback(null, publicKey);\n\n          fs.unlink(tmpFile, function (err) {\n            if (err) {\n              throw err;\n            }\n          });\n        }\n      });\n    }\n  });\n};\n\n/* istanbul ignore next */\nexports.encryptText = function (decText, password, base64, callback) {\n  var tmpFile = tmpFolder + uuid.v4();\n\n  if (base64 == true) {\n    var base = '-base64';\n  } else {\n    var base = '';\n  }\n\n  fs.writeFile(tmpFile, decText, function (err) {\n    if (err) {\n      return callback(new Error(err));\n    } else {\n      var cmdstring = binary + ' enc -' + cipher + ' -salt ' + base + ' -in ' + tmpFile + ' -pass pass:' + password;\n\n      exec(cmdstring, function (err, stdout, stderr) {\n        if (err) {\n          return callback(new Error(err));\n        } else {\n          fs.writeFile(tmpFile + '.out', stdout, function (err) {\n            if (err) {\n              return callback(new Error(err));\n            } else {\n              var encText;\n              encText = stdout.substring(0, stdout.lastIndexOf(\"\\n\"));\n\n              callback(null, encText);\n\n              fs.unlink(tmpFile, function (err) {\n                if (err) {\n                  throw err;\n                }\n              });\n              fs.unlink(tmpFile + '.out', function (err) {\n                if (err) {\n                  throw err;\n                }\n              });\n            }\n          });\n        }\n      });\n    }\n  });\n};\n\n/* istanbul ignore next */\nexports.decryptText = function (encText, password, base64, callback) {\n  var tmpFile = tmpFolder + uuid.v4();\n\n  if (base64 == true) {\n    var base = '-base64';\n  } else {\n    var base = '';\n  }\n\n  fs.writeFile(tmpFile, encText + \"\\n\", function (err) {\n    if (err) {\n      return callback(new Error(err));\n    } else {\n\n      var cmdstring = binary + ' enc -d -' + cipher + ' -salt ' + base + ' -in ' + tmpFile + ' -pass pass:' + password;\n\n      exec(cmdstring, function (err, stdout, stderr) {\n        if (err) {\n          return callback(new Error(err));\n        } else {\n          console.log(stdout);\n          callback(null, stdout);\n\n          fs.unlink(tmpFile, function (err) {\n            if (err) {\n              throw err;\n            }\n          });\n        }\n      })\n    }\n  });\n};\n\n/* istanbul ignore next */\nexports.randomString = function (length, base64, callback) {\n  if (base64 == true) {\n    var base = '-base64';\n  } else {\n    var base = '';\n  }\n\n  if (!length) {\n    var length = 128;\n  }\n\n  exec(binary + ' rand ' + base + ' ' + length, function (err, stdout, stderr) {\n    if (err) {\n      return callback(new Error(error));\n    } else {\n      var rand;\n      rand = stdout.substring(0, stdout.lastIndexOf(\"\\n\"));\n\n      callback(null, rand);\n    }\n  });\n};\n\n/* istanbul ignore next */\nexports.encryptMessage = function (publicKey, message, base64, callback) {\n  if (base64 == true) {\n    var base = '| base64';\n  } else {\n    var base = '';\n  }\n\n  var tmpKey = tmpFolder + uuid.v4();\n  var tmpFile = tmpFolder + uuid.v4();\n\n  fs.writeFile(tmpKey, publicKey, function (err) {\n    if (err) {\n      return callback(new Error(err));\n    } else {\n      fs.writeFile(tmpFile, message, function (err) {\n        if (err) {\n          return callback(new Error(err));\n        } else {\n          var cmdstring = binary + ' rsautl -encrypt -pubin -inkey ' + tmpKey + ' -in ' + tmpFile + base;\n\n          exec(cmdstring, function (err, stdout, stderr) {\n            if (err) {\n              return callback(new Error(err));\n            } else {\n              encMsg = stdout.substring(0, stdout.lastIndexOf(\"\\n\"));\n\n              callback(null, encMsg);\n\n              fs.unlink(tmpFile, function (err) {\n                if (err) {\n                  throw err;\n                }\n              });\n              fs.unlink(tmpKey, function (err) {\n                if (err) {\n                  throw err;\n                }\n              });\n            }\n          });\n        }\n      });\n    }\n  });\n};\n\n/* istanbul ignore next */\nexports.decryptMessage = function (privateKey, encMsg, base64, callback) {\n  if (base64 == true) {\n    var base = 'base64 -d '\n  } else {\n    var base = '';\n  }\n\n  var tmpKey = tmpFolder + uuid.v4();\n  var tmpFile = tmpFolder + uuid.v4();\n\n  fs.writeFile(tmpKey, privateKey, function (err) {\n    if (err) {\n      return callback(new Error(err));\n    } else {\n      fs.writeFile(tmpFile, encMsg, function (err) {\n        if (err) {\n          return callback(new Error(err));\n        } else {\n          var cmdstring = base + tmpFile + ' > ' + tmpFile + '.enc ; ' + binary + ' rsautl -decrypt -inkey ' + tmpKey + ' -in ' + tmpFile + '.enc';\n\n          exec(cmdstring, function (err, stdout, stderr) {\n            if (err) {\n              return callback(new Error(err));\n            } else {\n              decMsg = stdout + \"\\n\";\n\n              callback(null, decMsg);\n\n              fs.unlink(tmpFile, function (err) {\n                if (err) throw err;\n              });\n              fs.unlink(tmpFile + '.enc', function (err) {\n                if (err) throw err;\n              });\n              fs.unlink(tmpKey, function (err) {\n                if (err) throw err;\n              });\n            }\n          });\n        }\n      });\n    }\n  });\n};\n/* jshint ignore:end */"
+  },
+  {
+    "__docId__": 35,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "exec",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~exec",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 6,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 36,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "fs",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~fs",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 7,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 37,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "uuid",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~uuid",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 8,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 38,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "validator",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~validator",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 9,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 39,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "binary",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~binary",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 15,
+    "undocument": true,
+    "type": {
+      "types": [
+        "string"
+      ]
+    }
+  },
+  {
+    "__docId__": 40,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "cipher",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~cipher",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 16,
+    "undocument": true,
+    "type": {
+      "types": [
+        "string"
+      ]
+    }
+  },
+  {
+    "__docId__": 41,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "tmpFolder",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~tmpFolder",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 17,
+    "undocument": true,
+    "type": {
+      "types": [
+        "string"
+      ]
+    }
+  },
+  {
+    "__docId__": 42,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "createPrivateKey",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~createPrivateKey",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 24,
+    "undocument": true,
+    "params": [
+      {
+        "name": "keylength",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "password",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 43,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "createPublicKey",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~createPublicKey",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 41,
+    "undocument": true,
+    "params": [
+      {
+        "name": "privateKey",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "data",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 44,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "encryptText",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~encryptText",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 78,
+    "undocument": true,
+    "params": [
+      {
+        "name": "decText",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "password",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "base64",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 45,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "decryptText",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~decryptText",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 125,
+    "undocument": true,
+    "params": [
+      {
+        "name": "encText",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "password",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "base64",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 46,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "randomString",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~randomString",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 160,
+    "undocument": true,
+    "params": [
+      {
+        "name": "length",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "base64",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 47,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "encryptMessage",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~encryptMessage",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 184,
+    "undocument": true,
+    "params": [
+      {
+        "name": "publicKey",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "message",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "base64",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 48,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "decryptMessage",
+    "memberof": "src/open_ssl.js",
+    "longname": "src/open_ssl.js~decryptMessage",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/open_ssl.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 231,
+    "undocument": true,
+    "params": [
+      {
+        "name": "privateKey",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "encMsg",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "base64",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "callback",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 49,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "src/poll.js",
+    "memberof": null,
+    "longname": "src/poll.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "'use strict';\nvar _ = require('lodash');\nvar Connector = require('./connector');\nvar BBPromise = require('bluebird');\nvar moment = require('moment');\nvar logger = require('@hoist/logger');\nvar classLogger = logger.child({\n  cls: 'XeroPoller'\n});\nvar apiLimit = 500; // actual daily limit is 1000, have it lower to allow for other api calls\nvar errors = require('@hoist/errors');\nvar APILimitReachedError = errors.create({\n  name: 'APILimitReachedError'\n});\nvar ConnectorRequiresAuthorizationError = errors.create({\n  name: 'ConnectorRequiresAuthorizationError'\n});\n\n\nfunction XeroPoller(context) {\n  logger.debug(context, 'constructed poller');\n  this.context = context;\n  context.settings.applicationId = context.application._id;\n  context.settings.applicationName = context.application.name;\n  this.connector = new Connector(context.settings);\n}\nXeroPoller.prototype = {\n  assertCanPoll: function () {\n    return BBPromise.try(function () {\n      var frequency = 24 * 60 * this.context.subscription.endpoints.length / apiLimit;\n      var lastPolled = this.context.subscription.get('lastPolled');\n      classLogger.info({\n        subscription: this.context.subscription._id,\n        application: this.context.application._id\n      }, 'last polled at:', lastPolled);\n      if (lastPolled > moment().subtract(frequency, 'minutes').utc().format()) {\n        classLogger.warn({\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, 'xero poller limit reached');\n        this.context.subscription.delayTill(moment(lastPolled).add(frequency, 'minutes').toDate());\n        throw new APILimitReachedError();\n      }\n      if (this.context.settings.authType !== 'Private' && !(this.context.authorization)) {\n        classLogger.warn({\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, 'Xero connector needs auth and no auth set');\n        if (!lastPolled) {\n          lastPolled = moment().toDate();\n        }\n        this.context.subscription.delayTill(moment(lastPolled).add(frequency, 'minutes').toDate());\n        throw new ConnectorRequiresAuthorizationError();\n      }\n    }, [], this);\n  },\n  pollSubscription: function () {\n    return BBPromise.try(function () {\n        classLogger.info('checking if poll can happen');\n        return this.assertCanPoll();\n      }, [], this)\n      .bind(this)\n      .then(function () {\n        this.context.subscription.set('lastPolled', moment.utc().format());\n      }).then(function () {\n        if (this.context.authorization) {\n          classLogger.info({\n            subscription: this.context.subscription._id,\n            application: this.context.application._id\n          }, 'setting auth');\n          this.connector.authorize(this.context.authorization);\n        } else {\n          classLogger.info({\n            subscription: this.context.subscription._id,\n            application: this.context.application._id\n          }, 'no auth to set');\n        }\n      })\n      .then(function () {\n        classLogger.info({\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, 'generating pollEndpoing promises');\n        return _.map(this.context.subscription.endpoints, _.bind(this.pollEndpoint, this));\n      }).then(function (pollPromises) {\n        classLogger.info({\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, 'settling promises');\n        return BBPromise.settle(pollPromises);\n      })\n      .then(function () {\n        classLogger.info({\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, 'done with poll');\n      }).catch(function (err) {\n        classLogger.error({\n          err: {\n            message: err.message,\n            stack: err.stack\n          },\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, err.message);\n        if (!(err instanceof APILimitReachedError) && !(err instanceof ConnectorRequiresAuthorizationError)) {\n          logger.alert(err);\n        }\n      });\n\n  },\n  pollEndpoint: function (endpoint) {\n    var singularEndpointName = endpoint.replace(/s$/, '');\n    var _lastPoll = this.context.subscription.get(endpoint) ? this.context.subscription.get(endpoint).lastPolled : null;\n    var extraHeader = _lastPoll ? {\n      'If-Modified-Since': _lastPoll\n    } : {};\n    var formattedEndpoint = '/' + endpoint;\n    classLogger.info({\n      subscription: this.context.subscription._id,\n      application: this.context.application._id,\n      formattedEndpoint: formattedEndpoint,\n      extraHeader: extraHeader\n    }, 'polling endpoint');\n    var timeNow = moment.utc().format();\n    var get = this.connector.get(formattedEndpoint, extraHeader);\n    return get\n      .bind(this)\n      .then(function (results) {\n        classLogger.info({\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, 'got results from endpoint');\n        classLogger.debug({\n          results: results,\n          endpoint: endpoint\n        }, 'got results from endpoint');\n        return this.handleResults(results, endpoint, singularEndpointName, _lastPoll, timeNow);\n      }).catch(function (err) {\n        classLogger.info({\n          subscription: this.context.subscription._id,\n          application: this.context.application._id,\n          error: err.message\n        }, 'error from get request');\n        classLogger.error({\n          err: {\n            message: err.message,\n            stack: err.stack\n          },\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, err.message);\n        classLogger.error(err);\n      });\n  },\n  handleResults: function (results, endpoint, singularEndpointName, _lastPoll, timeNow) {\n    var self = this;\n    if (!results.Response[endpoint]) {\n      classLogger.info({\n        subscription: this.context.subscription._id,\n        application: this.context.application._id,\n        endpoint: endpoint\n      }, 'no results in response');\n      return BBPromise.resolve();\n      //   return this.subscription.set(endpoint, {\n      //     lastPolled: timeNow\n      //   });\n    }\n    var entities = [].concat(results.Response[endpoint][singularEndpointName]);\n    classLogger.debug({\n      subscription: this.context.subscription._id,\n      application: this.context.application._id,\n      entities: entities\n    }, 'parsed entities from endpoint');\n    var mappedResults = _.map(entities, function (result) {\n      return {\n        result: result,\n        endpoint: endpoint,\n        singularEndpointName: singularEndpointName,\n        lastPoll: _lastPoll,\n        connectorKey: self.context.connectorKey\n      };\n    });\n    logger.info({\n      subscription: this.context.subscription._id,\n      application: this.context.application._id\n    }, \"mapping results to events\");\n    return BBPromise.settle(_.map(mappedResults, _.bind(this.raiseEvent, this)))\n      .bind(this)\n      .then(function (promises) {\n        var lastPolled = _.reduceRight(entities, function (max, next) {\n          return next.UpdatedDateUTC > max ? next.UpdatedDateUTC : max;\n        }, '');\n        lastPolled = results.Response.DateTimeUTC || lastPolled || timeNow;\n        var endpointData = this.context.subscription.get(endpoint);\n        endpointData.lastPolled = lastPolled;\n        this.context.subscription.set(endpoint, endpointData);\n        return promises;\n      }).catch(function (err) {\n        classLogger.error({\n          err: {\n            message: err.message,\n            stack: err.stack\n          },\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, err.message);\n      });\n  },\n  raiseEvent: function (result) {\n    logger.info({\n      result: result,\n      subscription: this.context.subscription._id,\n      application: this.context.application._id\n    }, 'raising event');\n    return this.checkIfNew(result)\n      .bind(this)\n      .then(function (isNew) {\n\n        var eventName = result.connectorKey + ((result.result.Status && result.result.Status === 'DELETED') ? ':deleted:' : (isNew ? ':new:' : ':modified:')) + result.endpoint.toLowerCase();\n        classLogger.info({\n          eventName: eventName,\n          subscription: this.context.subscription._id,\n          application: this.context.application._id\n        }, 'raising event');\n        return this.emit(eventName, result.result);\n      });\n  },\n  checkIfNew: function (result) {\n    var isNew = false;\n    if (result.result.CreatedDateUTC && moment(result.result.CreatedDateUTC).isAfter(result.lastPoll)) {\n      isNew = true;\n    }\n    var meta = this.context.subscription.get(result.endpoint);\n    if (!meta) {\n      this.context.subscription.set(result.endpoint, {\n        ids: []\n      });\n    }\n    meta = this.context.subscription.get(result.endpoint);\n    meta.ids = meta.ids || [];\n    if (result.result[result.singularEndpointName + 'ID'] && meta.ids.indexOf(result.result[result.singularEndpointName + 'ID']) === -1) {\n      meta.ids.push(result.result[result.singularEndpointName + 'ID']);\n      classLogger.info({\n        subscription: this.context.subscription._id,\n        application: this.context.application._id,\n        meta: meta\n      }, 'saving id to meta');\n    }\n    return BBPromise.resolve(isNew);\n  }\n};\nmodule.exports = function (context, raiseMethod) {\n  var poller = new XeroPoller(context);\n  poller.emit = raiseMethod;\n  return poller.pollSubscription();\n};\n"
+  },
+  {
+    "__docId__": 50,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "_",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~_",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 51,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "Connector",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~Connector",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 52,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "BBPromise",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~BBPromise",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 4,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 53,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "moment",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~moment",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 54,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "logger",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~logger",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 6,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 55,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "classLogger",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~classLogger",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 7,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 56,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "apiLimit",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~apiLimit",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 10,
+    "undocument": true,
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 57,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "errors",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~errors",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 11,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 58,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "APILimitReachedError",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~APILimitReachedError",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 12,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 59,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "ConnectorRequiresAuthorizationError",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~ConnectorRequiresAuthorizationError",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 15,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 60,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "XeroPoller",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~XeroPoller",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 20,
+    "undocument": true,
+    "params": [
+      {
+        "name": "context",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 61,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "exports",
+    "memberof": "src/poll.js",
+    "longname": "src/poll.js~exports",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/poll.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 253,
+    "undocument": true,
+    "params": [
+      {
+        "name": "context",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "raiseMethod",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 62,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "src/views/edit.js",
+    "memberof": null,
+    "longname": "src/views/edit.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 3,
+    "content": "/* globals UI */\n\nvar C = UI.Views.Connector;\n\nclass EditForm extends C.View {\n  constructor(props) {\n    super(props);\n    this.state = {\n      events: []\n    };\n    if (!props.connector) {\n      this.state.mode = 'connect';\n    }\n  }\n  connect() {\n    this.props.onConnect();\n  }\n  render() {\n    return (\n      <C.Page default=\"setup\" {...this.props}>\n        <C.Panel name=\"Setup\" slug=\"setup\">\n          <UI.FormElements.Button text={this.props.connectorInstance ? 'Reauthorize' : 'Connect'} type=\"large\" onClick={()=>{\n              return this.connect();\n            }} />\n        </C.Panel>\n        {this.props.connectorInstance ? <C.Panel name=\"Events\" slug=\"events\">\n        <C.PageHeader\n          title=\"Check the boxes of the events you want to subscribe to.\"\n          subTitle=\"Checking a box will automatically subscribe you to that event.\" />\n          <C.CheckboxGrid\n            items={this.props.connectorPrototype.events}\n            checked={this.props.connectorInstance.events}\n            onChange={this.props.onSubscribe} />\n        </C.Panel> : <C.Panel name=\"Events\" slug=\"events\">\n          <C.PageHeader\n            title=\"Events are available once you've connected.\" />\n        </C.Panel>}\n      </C.Page>\n    );\n  }\n}\n\nexport default EditForm;\nglobal.EditForm = EditForm;\n"
+  },
+  {
+    "__docId__": 63,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "C",
+    "memberof": "src/views/edit.js",
+    "longname": "src/views/edit.js~C",
+    "access": null,
+    "export": false,
+    "importPath": "hoist-connector-xero/src/views/edit.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 64,
+    "kind": "class",
+    "static": true,
+    "variation": null,
+    "name": "EditForm",
+    "memberof": "src/views/edit.js",
+    "longname": "src/views/edit.js~EditForm",
+    "access": null,
+    "export": true,
+    "importPath": "hoist-connector-xero/src/views/edit.js",
+    "importStyle": "EditForm",
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "interface": false,
+    "extends": [
+      "C~C.View"
+    ]
+  },
+  {
+    "__docId__": 65,
+    "kind": "constructor",
+    "static": false,
+    "variation": null,
+    "name": "constructor",
+    "memberof": "src/views/edit.js~EditForm",
+    "longname": "src/views/edit.js~EditForm#constructor",
+    "access": null,
+    "description": null,
+    "lineNumber": 6,
+    "undocument": true,
+    "params": [
+      {
+        "name": "props",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 66,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "state",
+    "memberof": "src/views/edit.js~EditForm",
+    "longname": "src/views/edit.js~EditForm#state",
+    "access": null,
+    "description": null,
+    "lineNumber": 8,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 67,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "connect",
+    "memberof": "src/views/edit.js~EditForm",
+    "longname": "src/views/edit.js~EditForm#connect",
+    "access": null,
+    "description": null,
+    "lineNumber": 15,
+    "undocument": true,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 68,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "render",
+    "memberof": "src/views/edit.js~EditForm",
+    "longname": "src/views/edit.js~EditForm#render",
+    "access": null,
+    "description": null,
+    "lineNumber": 18,
+    "undocument": true,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 70,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Infinity",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Infinity",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 71,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "NaN",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~NaN",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 72,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "undefined",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~undefined",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 73,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "null",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~null",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 74,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 75,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 76,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 77,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 78,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 79,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 80,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Symbol",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Symbol",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 81,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Error",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Error",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 82,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "EvalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~EvalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 83,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "InternalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~InternalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 84,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "RangeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RangeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 85,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "ReferenceError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ReferenceError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 86,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "SyntaxError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~SyntaxError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 87,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "TypeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~TypeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 88,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "URIError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~URIError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 89,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 90,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 91,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Date",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Date",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 92,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "String",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~String",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 93,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "string",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~string",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 94,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "RegExp",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RegExp",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 95,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 96,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Int8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 97,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 98,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint8ClampedArray",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8ClampedArray",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 99,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Int16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 100,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 101,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Int32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 102,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 103,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Float32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 104,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Float64Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float64Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 105,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Map",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Map",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 106,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Set",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Set",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 107,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "WeakMap",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakMap",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 108,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "WeakSet",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakSet",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 109,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "ArrayBuffer",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ArrayBuffer",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 110,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "DataView",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~DataView",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 111,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "JSON",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~JSON",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 112,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Promise",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Promise",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 113,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Generator",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Generator",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 114,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "GeneratorFunction",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~GeneratorFunction",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 115,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Reflect",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Reflect",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 116,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Proxy",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Proxy",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 118,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "CanvasRenderingContext2D",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~CanvasRenderingContext2D",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 119,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "DocumentFragment",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~DocumentFragment",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 120,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Element",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Element",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~Element",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 121,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Event",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Event",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~Event",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 122,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Node",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Node",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~Node",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 123,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "NodeList",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/NodeList",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~NodeList",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 124,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "XMLHttpRequest",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~XMLHttpRequest",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 125,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "AudioContext",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/AudioContext",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~AudioContext",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 126,
+    "kind": "testFile",
+    "static": true,
+    "variation": null,
+    "name": "tests/integration_tests/partner_auth_tests.js",
+    "memberof": null,
+    "longname": "tests/integration_tests/partner_auth_tests.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "'use strict';\nvar Connector = require('../../lib/connector');\nvar fs = require('fs');\nvar path = require('path');\nvar BBPromise = require('bluebird');\ndescribe.skip('Partner Auth', function () {\n  var connector;\n  before(function () {\n    var privateKey = fs.readFileSync(path.resolve('/Volumes/Store/Projects/hoist/ssl/xero/hoist_xero_private_key.pem')).toString();\n    var publicKey = fs.readFileSync(path.resolve('/Volumes/Store/Projects/hoist/ssl/xero/hoist_xero.cer')).toString();\n    connector = new Connector({\n      authType: 'Partner',\n      privateKey: privateKey,\n      publicKey: publicKey,\n      consumerKey: 'NXKZHFJYX3SFUHZ7RXKXLE0LTZPMM0',\n      consumerSecret: '2TIE2ST6N1U54JZ8KHRDWONLW02SZM'\n    });\n  });\n  this.timeout(50000);\n  describe('initial bounce', function () {\n    before(function () {\n      var bounce = {\n        get: function () {\n          return undefined;\n        },\n        delete: function () {\n          return BBPromise.resolve(null);\n        },\n        set: function () {\n          console.log('set', arguments);\n          return BBPromise.resolve(null);\n        },\n        redirect: function () {\n          console.log('redirect', arguments);\n          return BBPromise.resolve(null);\n        },\n        done: function () {\n          console.log('done', arguments);\n          return BBPromise.resolve(null);\n        }\n      };\n      return connector.receiveBounce(bounce);\n    });\n    it('should do some redirect', function () {\n\n    });\n  });\n  describe('second bounce', function () {\n    before(function () {\n      /*jshint camelcase: false */\n      var bounce = {\n        query: {\n          oauth_verifier: '1500743'\n        },\n        get: function (key) {\n          if (key === 'RequestToken') {\n            return '24A38953RA0DOFV58JNSQDZIZSZB9C';\n          }\n          if (key === 'RequestTokenSecret') {\n            return 'SGOT4TJTRFRXYEDVZKITAHNUZB2QTH';\n          }\n          return undefined;\n        },\n        delete: function () {\n          return BBPromise.resolve(null);\n        },\n        set: function () {\n          console.log('set', arguments);\n          return BBPromise.resolve(null);\n        },\n        redirect: function () {\n          console.log('redirect', arguments);\n          return BBPromise.resolve(null);\n        },\n        done: function () {\n          console.log('done', arguments);\n          return BBPromise.resolve(null);\n        }\n      };\n      return connector.receiveBounce(bounce).catch(function (err) {\n        console.log(err);\n      });\n    });\n    it('should do some redirect', function () {\n\n    });\n  });\n  describe('get contacts', function () {\n    before(function () {\n\n      var auth = {\n        AccessToken: 'YDEPSYUOV9ZVCWKWS9OORH1992FEMW',\n        AccessTokenSecret: 'ZYJRYPZQ5NIJDQ1Z0VU9JTF1DKBQUN',\n        SessionHandle: 'AXI05QGE5G7TXJLXTPGL',\n        SessionExpiresAt: '2024-12-14T02:54:08.256Z',\n        TokenExpiresAt: '2014-12-17T03:24:08.255Z'\n      };\n      var bounce = {\n        get: function (key) {\n          return auth[key];\n        },\n        delete: function () {\n          return BBPromise.resolve(null);\n        },\n        set: function (key, value) {\n          console.log('set',arguments);\n          auth[key] = value;\n          return BBPromise.resolve(null);\n        },\n        redirect: function () {\n          console.log('redirect', arguments);\n          return BBPromise.resolve(null);\n        },\n        done: function () {\n          console.log('done', arguments);\n          return BBPromise.resolve(null);\n        }\n      };\n      connector.authorize(bounce);\n      return connector.get('/contacts').then(function () {\n        console.log(arguments);\n      }).catch(function (err) {\n        console.log(err, err.stack);\n      });\n    });\n    it('should', function () {\n\n    });\n  });\n});\n"
+  },
+  {
+    "__docId__": 127,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe0",
+    "testId": 0,
+    "memberof": "tests/integration_tests/partner_auth_tests.js",
+    "testDepth": 0,
+    "longname": "tests/integration_tests/partner_auth_tests.js~describe0",
+    "access": null,
+    "description": "initial bounce",
+    "lineNumber": 20
+  },
+  {
+    "__docId__": 128,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it1",
+    "testId": 1,
+    "memberof": "tests/integration_tests/partner_auth_tests.js~describe0",
+    "testDepth": 1,
+    "longname": "tests/integration_tests/partner_auth_tests.js~describe0.it1",
+    "access": null,
+    "description": "should do some redirect",
+    "lineNumber": 44
+  },
+  {
+    "__docId__": 129,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe2",
+    "testId": 2,
+    "memberof": "tests/integration_tests/partner_auth_tests.js",
+    "testDepth": 0,
+    "longname": "tests/integration_tests/partner_auth_tests.js~describe2",
+    "access": null,
+    "description": "second bounce",
+    "lineNumber": 48
+  },
+  {
+    "__docId__": 130,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it3",
+    "testId": 3,
+    "memberof": "tests/integration_tests/partner_auth_tests.js~describe2",
+    "testDepth": 1,
+    "longname": "tests/integration_tests/partner_auth_tests.js~describe2.it3",
+    "access": null,
+    "description": "should do some redirect",
+    "lineNumber": 84
+  },
+  {
+    "__docId__": 131,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe4",
+    "testId": 4,
+    "memberof": "tests/integration_tests/partner_auth_tests.js",
+    "testDepth": 0,
+    "longname": "tests/integration_tests/partner_auth_tests.js~describe4",
+    "access": null,
+    "description": "get contacts",
+    "lineNumber": 88
+  },
+  {
+    "__docId__": 132,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it5",
+    "testId": 5,
+    "memberof": "tests/integration_tests/partner_auth_tests.js~describe4",
+    "testDepth": 1,
+    "longname": "tests/integration_tests/partner_auth_tests.js~describe4.it5",
+    "access": null,
+    "description": "should",
+    "lineNumber": 126
+  },
+  {
+    "__docId__": 133,
+    "kind": "testFile",
+    "static": true,
+    "variation": null,
+    "name": "tests/integration_tests/poll_tests.js",
+    "memberof": null,
+    "longname": "tests/integration_tests/poll_tests.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 0,
+    "content": ""
+  },
+  {
+    "__docId__": 134,
+    "kind": "testFile",
+    "static": true,
+    "variation": null,
+    "name": "tests/unit_tests/bounce_tests.js",
+    "memberof": null,
+    "longname": "tests/unit_tests/bounce_tests.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "'use strict';\nvar XeroConnector = require('../../lib/connector');\nvar sinon = require('sinon');\nvar OAuth = require('@hoist/oauth').OAuth;\nvar expect = require('chai').expect;\nvar BBPromise = require('bluebird');\ndescribe('Xero Connector', function () {\n  describe('Public app', function () {\n    describe('#receiveBounce', function () {\n      describe('first bounce', function () {\n        var mockBounce = {\n          get: sinon.stub(),\n          set: sinon.stub().returns(BBPromise.resolve(null)),\n          redirect: sinon.stub(),\n          done: sinon.stub()\n        };\n        before(function () {\n          sinon.stub(OAuth.prototype, 'getOAuthRequestToken').yields(null, 'token', 'token_secret');\n          var connector = new XeroConnector({\n            authType: 'Public'\n          });\n          connector.receiveBounce(mockBounce);\n        });\n        after(function () {\n          OAuth.prototype.getOAuthRequestToken.restore();\n        });\n        it('redirects to xero', function () {\n          expect(mockBounce.redirect)\n            .to.have.been\n            .calledWith('https://api.xero.com/oauth/Authorize?oauth_token=token');\n        });\n        it('saves request token', function () {\n          expect(mockBounce.set)\n            .to.have.been.calledWith('RequestToken', 'token');\n        });\n        it('saves request token secret', function () {\n          expect(mockBounce.set)\n            .to.have.been.calledWith('RequestTokenSecret', 'token_secret');\n        });\n      });\n      describe('on return from Xero', function () {\n        var mockBounce = {\n          get: sinon.stub(),\n          set: sinon.stub().returns(BBPromise.resolve(null)),\n          query: {\n            /* jshint camelcase:false */\n            oauth_verifier: 'oauth_verifier_value'\n          },\n          redirect: sinon.stub(),\n          done: sinon.stub(),\n          delete: sinon.stub().returns(BBPromise.resolve(null))\n        };\n        before(function () {\n          mockBounce.get.withArgs('RequestToken').returns('request_token');\n          mockBounce.get.withArgs('RequestTokenSecret').returns('request_token_secret');\n          sinon.stub(OAuth.prototype, 'getOAuthAccessToken').yields(null, 'token', 'token_secret');\n          var connector = new XeroConnector({\n            authType: 'Public'\n          });\n          connector.receiveBounce(mockBounce);\n        });\n        after(function () {\n          OAuth.prototype.getOAuthAccessToken.restore();\n        });\n        it('redirects back to app', function () {\n          return expect(mockBounce.done)\n            .to.have.been\n            .called;\n        });\n        it('sends correct params to get access token', function () {\n          expect(OAuth.prototype.getOAuthAccessToken)\n            .to.have.been.calledWith('request_token', 'request_token_secret', 'oauth_verifier_value');\n        });\n        it('saves access token', function () {\n          expect(mockBounce.set)\n            .to.have.been.calledWith('AccessToken', 'token');\n        });\n        it('saves access token secret', function () {\n          expect(mockBounce.set)\n            .to.have.been.calledWith('AccessTokenSecret', 'token_secret');\n        });\n      });\n\n    });\n  });\n});\n"
+  },
+  {
+    "__docId__": 135,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe6",
+    "testId": 6,
+    "memberof": "tests/unit_tests/bounce_tests.js",
+    "testDepth": 0,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6",
+    "access": null,
+    "description": "Xero Connector",
+    "lineNumber": 7
+  },
+  {
+    "__docId__": 136,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe7",
+    "testId": 7,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6",
+    "testDepth": 1,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7",
+    "access": null,
+    "description": "Public app",
+    "lineNumber": 8
+  },
+  {
+    "__docId__": 137,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe8",
+    "testId": 8,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7",
+    "testDepth": 2,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8",
+    "access": null,
+    "description": "#receiveBounce",
+    "lineNumber": 9
+  },
+  {
+    "__docId__": 138,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe9",
+    "testId": 9,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe9",
+    "access": null,
+    "description": "first bounce",
+    "lineNumber": 10
+  },
+  {
+    "__docId__": 139,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it10",
+    "testId": 10,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe9",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe9.it10",
+    "access": null,
+    "description": "redirects to xero",
+    "lineNumber": 27
+  },
+  {
+    "__docId__": 140,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it11",
+    "testId": 11,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe9",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe9.it11",
+    "access": null,
+    "description": "saves request token",
+    "lineNumber": 32
+  },
+  {
+    "__docId__": 141,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it12",
+    "testId": 12,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe9",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe9.it12",
+    "access": null,
+    "description": "saves request token secret",
+    "lineNumber": 36
+  },
+  {
+    "__docId__": 142,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe13",
+    "testId": 13,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe13",
+    "access": null,
+    "description": "on return from Xero",
+    "lineNumber": 41
+  },
+  {
+    "__docId__": 143,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it14",
+    "testId": 14,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe13",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe13.it14",
+    "access": null,
+    "description": "redirects back to app",
+    "lineNumber": 65
+  },
+  {
+    "__docId__": 144,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it15",
+    "testId": 15,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe13",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe13.it15",
+    "access": null,
+    "description": "sends correct params to get access token",
+    "lineNumber": 70
+  },
+  {
+    "__docId__": 145,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it16",
+    "testId": 16,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe13",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe13.it16",
+    "access": null,
+    "description": "saves access token",
+    "lineNumber": 74
+  },
+  {
+    "__docId__": 146,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it17",
+    "testId": 17,
+    "memberof": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe13",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/bounce_tests.js~describe6.describe7.describe8.describe13.it17",
+    "access": null,
+    "description": "saves access token secret",
+    "lineNumber": 78
+  },
+  {
+    "__docId__": 147,
+    "kind": "testFile",
+    "static": true,
+    "variation": null,
+    "name": "tests/unit_tests/connector_tests.js",
+    "memberof": null,
+    "longname": "tests/unit_tests/connector_tests.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "'use strict';\nrequire('../bootstrap');\nvar XeroConnector = require('../../lib/connector');\nvar sinon = require('sinon');\nvar BBPromise = require('bluebird');\nvar expect = require('chai').expect;\nvar OAuth = require('@hoist/oauth').OAuth;\n\ndescribe('XeroConnector', function () {\n  var connector;\n  before(function () {\n    connector = new XeroConnector({\n      privateKey: 'privateKey',\n      publicKey: 'publicKey',\n      consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',\n      consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',\n      authType: 'Private'\n    });\n  });\n  describe('#get', function () {\n    var response = {};\n    var result;\n    before(function () {\n      sinon.stub(connector, 'request').returns(BBPromise.resolve(response));\n      result = connector.get('/contacts');\n    });\n    after(function () {\n      connector.request.restore();\n    });\n    it('calls #request', function () {\n      expect(connector.request)\n        .to.have.been.calledWith('GET', '/contacts');\n    });\n\n  });\n  describe('#put', function () {\n    var response = {};\n    var data = 'data';\n    var result;\n    before(function () {\n      sinon.stub(connector, 'request').returns(BBPromise.resolve(response));\n      result = connector.put('/contacts', data);\n    });\n    after(function () {\n      connector.request.restore();\n    });\n    it('calls #request', function () {\n      expect(connector.request)\n        .to.have.been.calledWith('PUT', '/contacts', data);\n    });\n\n  });\n  describe('#post', function () {\n    var response = {};\n    var data = 'data';\n    var result;\n    before(function () {\n      sinon.stub(connector, 'request').returns(BBPromise.resolve(response));\n      result = connector.post('/contacts', data);\n    });\n    after(function () {\n      connector.request.restore();\n    });\n    it('calls #request', function () {\n      expect(connector.request)\n        .to.have.been.calledWith('POST', '/contacts', data);\n    });\n\n  });\n  describe('#request', function () {\n    describe('with GET', function () {\n      var result;\n      var xml = '<result><key>name</key></result>';\n      before(function () {\n        sinon.stub(OAuth.prototype, '_performSecureRequest').yields(null, xml, {});\n        connector = new XeroConnector({\n          privateKey: 'privateKey',\n          publicKey: 'publicKey',\n          consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',\n          consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',\n          authType: 'Private'\n        });\n        return (result = connector.request('GET', '/contacts'));\n      });\n      after(function () {\n        OAuth.prototype._performSecureRequest.restore();\n      });\n      it('calls underlying auth library', function () {\n        return expect(OAuth.prototype._performSecureRequest)\n          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'GET', 'https://api.xero.com/api.xro/2.0/contacts', null, null, 'application/xml');\n      });\n      it('returns json', function () {\n        return expect(result)\n          .to.become({\n            result: {\n              key: 'name'\n            }\n          });\n      });\n    });\n    describe('with PUT', function () {\n      var result;\n      var xml = '<result><key>name</key></result>';\n      var data = 'data';\n      before(function () {\n        sinon.stub(OAuth.prototype, '_performSecureRequest').callsArgWith(8, null, xml, {});\n        connector = new XeroConnector({\n          privateKey: 'privateKey',\n          publicKey: 'publicKey',\n          consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',\n          consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',\n          authType: 'Private'\n        });\n        return (result = connector.request('PUT', '/contacts', data));\n      });\n      after(function () {\n        OAuth.prototype._performSecureRequest.restore();\n      });\n      it('calls underlying auth library', function () {\n        return expect(OAuth.prototype._performSecureRequest)\n          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'PUT', 'https://api.xero.com/api.xro/2.0/contacts', null, 'data', 'application/xml');\n      });\n      it('returns json', function () {\n        return expect(result)\n          .to.become({\n            result: {\n              key: 'name'\n            }\n          });\n      });\n    });\n    describe('with POST', function () {\n      var result;\n      var xml = '<result><key>name</key></result>';\n      var data = 'data';\n      before(function () {\n        sinon.stub(OAuth.prototype, '_performSecureRequest').callsArgWith(8, null, xml, {});\n        connector = new XeroConnector({\n          privateKey: 'privateKey',\n          publicKey: 'publicKey',\n          consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',\n          consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',\n          authType: 'Private'\n        });\n        return (result = connector.request('POST', '/contacts', data));\n      });\n      after(function () {\n        OAuth.prototype._performSecureRequest.restore();\n      });\n      it('calls underlying auth library', function () {\n        return expect(OAuth.prototype._performSecureRequest)\n          .to.have.been.calledWith('BPEMJHODRTROXDVOMO6EE8J0YB6MPN', 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38', 'POST', 'https://api.xero.com/api.xro/2.0/contacts', null, 'data', 'application/xml');\n      });\n      it('returns json', function () {\n        return expect(result)\n          .to.become({\n            result: {\n              key: 'name'\n            }\n          });\n      });\n    });\n  });\n  describe('#getUrl', function () {\n    describe('with private auth', function () {\n      var url;\n      describe('with runscope on', function () {\n        before(function () {\n          var connector = new XeroConnector({\n            privateKey: 'privateKey',\n            publicKey: 'publicKey',\n            consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',\n            consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',\n            authType: 'Private',\n            runscopeBucket: 'bucket'\n          });\n          url = connector._getUrl('/contacts');\n        });\n        it('should return runscope url', function () {\n          expect(url).to.eql('https://api-xero-com-bucket.runscope.net/api.xro/2.0/contacts');\n        });\n\n        describe('without runscope', function () {\n\n          before(function () {\n            var connector = new XeroConnector({\n              privateKey: 'privateKey',\n              publicKey: 'publicKey',\n              consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',\n              consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',\n              authType: 'Private'\n            });\n            url = connector._getUrl('/contacts');\n          });\n          it('should return standard url', function () {\n            expect(url).to.eql('https://api.xero.com/api.xro/2.0/contacts');\n          });\n        });\n      });\n      describe('with partner auth', function () {\n        describe('with runscope on', function () {\n          before(function () {\n            var connector = new XeroConnector({\n              privateKey: 'privateKey',\n              publicKey: 'publicKey',\n              consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',\n              consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',\n              authType: 'Partner',\n              runscopeBucket: 'bucket'\n            });\n            url = connector._getUrl('/contacts');\n          });\n          it('should return standard url', function () {\n            expect(url).to.eql('https://api-partner.network.xero.com/api.xro/2.0/contacts');\n          });\n        });\n        describe('without runscope', function () {\n          before(function () {\n            var connector = new XeroConnector({\n              privateKey: 'privateKey',\n              publicKey: 'publicKey',\n              consumerKey: 'BPEMJHODRTROXDVOMO6EE8J0YB6MPN',\n              consumerSecret: 'EBTYHCQO5TSDHICSSWDYNEL3MYUA38',\n              authType: 'Partner'\n            });\n            url = connector._getUrl('/contacts');\n          });\n          it('should return standard url', function () {\n            expect(url).to.eql('https://api-partner.network.xero.com/api.xro/2.0/contacts');\n          });\n        });\n      });\n    });\n  });\n  describe('setup', function () {\n    describe('generating defaults', function () {\n      describe('Private connector', function () {\n        var settings;\n        before(function (done) {\n          XeroConnector.defaultSettings('Private')\n            .then(function (_settings) {\n              settings = _settings;\n              done();\n            });\n        });\n        it('returns a public key', function () {\n          return expect(settings)\n            .to.have.property('publicKey');\n        });\n      });\n      describe('Public connector', function () {\n        var settings;\n        before(function (done) {\n          XeroConnector.defaultSettings('Public')\n            .then(function (_settings) {\n              settings = _settings;\n              done();\n            });\n        });\n        it('returns an empty object', function () {\n          return expect(settings).to.not.have.property('publicKey');\n        });\n      });\n    });\n  });\n});\n"
+  },
+  {
+    "__docId__": 148,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe18",
+    "testId": 18,
+    "memberof": "tests/unit_tests/connector_tests.js",
+    "testDepth": 0,
+    "longname": "tests/unit_tests/connector_tests.js~describe18",
+    "access": null,
+    "description": "XeroConnector",
+    "lineNumber": 9
+  },
+  {
+    "__docId__": 149,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe19",
+    "testId": 19,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18",
+    "testDepth": 1,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe19",
+    "access": null,
+    "description": "#get",
+    "lineNumber": 20
+  },
+  {
+    "__docId__": 150,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it20",
+    "testId": 20,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe19",
+    "testDepth": 2,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe19.it20",
+    "access": null,
+    "description": "calls #request",
+    "lineNumber": 30
+  },
+  {
+    "__docId__": 151,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe21",
+    "testId": 21,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18",
+    "testDepth": 1,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe21",
+    "access": null,
+    "description": "#put",
+    "lineNumber": 36
+  },
+  {
+    "__docId__": 152,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it22",
+    "testId": 22,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe21",
+    "testDepth": 2,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe21.it22",
+    "access": null,
+    "description": "calls #request",
+    "lineNumber": 47
+  },
+  {
+    "__docId__": 153,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe23",
+    "testId": 23,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18",
+    "testDepth": 1,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe23",
+    "access": null,
+    "description": "#post",
+    "lineNumber": 53
+  },
+  {
+    "__docId__": 154,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it24",
+    "testId": 24,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe23",
+    "testDepth": 2,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe23.it24",
+    "access": null,
+    "description": "calls #request",
+    "lineNumber": 64
+  },
+  {
+    "__docId__": 155,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe25",
+    "testId": 25,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18",
+    "testDepth": 1,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25",
+    "access": null,
+    "description": "#request",
+    "lineNumber": 70
+  },
+  {
+    "__docId__": 156,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe26",
+    "testId": 26,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe25",
+    "testDepth": 2,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25.describe26",
+    "access": null,
+    "description": "with GET",
+    "lineNumber": 71
+  },
+  {
+    "__docId__": 157,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it27",
+    "testId": 27,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe25.describe26",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25.describe26.it27",
+    "access": null,
+    "description": "calls underlying auth library",
+    "lineNumber": 88
+  },
+  {
+    "__docId__": 158,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it28",
+    "testId": 28,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe25.describe26",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25.describe26.it28",
+    "access": null,
+    "description": "returns json",
+    "lineNumber": 92
+  },
+  {
+    "__docId__": 159,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe29",
+    "testId": 29,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe25",
+    "testDepth": 2,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25.describe29",
+    "access": null,
+    "description": "with PUT",
+    "lineNumber": 101
+  },
+  {
+    "__docId__": 160,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it30",
+    "testId": 30,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe25.describe29",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25.describe29.it30",
+    "access": null,
+    "description": "calls underlying auth library",
+    "lineNumber": 119
+  },
+  {
+    "__docId__": 161,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it31",
+    "testId": 31,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe25.describe29",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25.describe29.it31",
+    "access": null,
+    "description": "returns json",
+    "lineNumber": 123
+  },
+  {
+    "__docId__": 162,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe32",
+    "testId": 32,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe25",
+    "testDepth": 2,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25.describe32",
+    "access": null,
+    "description": "with POST",
+    "lineNumber": 132
+  },
+  {
+    "__docId__": 163,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it33",
+    "testId": 33,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe25.describe32",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25.describe32.it33",
+    "access": null,
+    "description": "calls underlying auth library",
+    "lineNumber": 150
+  },
+  {
+    "__docId__": 164,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it34",
+    "testId": 34,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe25.describe32",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe25.describe32.it34",
+    "access": null,
+    "description": "returns json",
+    "lineNumber": 154
+  },
+  {
+    "__docId__": 165,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe35",
+    "testId": 35,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18",
+    "testDepth": 1,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35",
+    "access": null,
+    "description": "#getUrl",
+    "lineNumber": 164
+  },
+  {
+    "__docId__": 166,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe36",
+    "testId": 36,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35",
+    "testDepth": 2,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36",
+    "access": null,
+    "description": "with private auth",
+    "lineNumber": 165
+  },
+  {
+    "__docId__": 167,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe37",
+    "testId": 37,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe37",
+    "access": null,
+    "description": "with runscope on",
+    "lineNumber": 167
+  },
+  {
+    "__docId__": 168,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it38",
+    "testId": 38,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe37",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe37.it38",
+    "access": null,
+    "description": "should return runscope url",
+    "lineNumber": 179
+  },
+  {
+    "__docId__": 169,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe39",
+    "testId": 39,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe37",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe37.describe39",
+    "access": null,
+    "description": "without runscope",
+    "lineNumber": 183
+  },
+  {
+    "__docId__": 170,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it40",
+    "testId": 40,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe37.describe39",
+    "testDepth": 5,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe37.describe39.it40",
+    "access": null,
+    "description": "should return standard url",
+    "lineNumber": 195
+  },
+  {
+    "__docId__": 171,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe41",
+    "testId": 41,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe41",
+    "access": null,
+    "description": "with partner auth",
+    "lineNumber": 200
+  },
+  {
+    "__docId__": 172,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe42",
+    "testId": 42,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe41",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe41.describe42",
+    "access": null,
+    "description": "with runscope on",
+    "lineNumber": 201
+  },
+  {
+    "__docId__": 173,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it43",
+    "testId": 43,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe41.describe42",
+    "testDepth": 5,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe41.describe42.it43",
+    "access": null,
+    "description": "should return standard url",
+    "lineNumber": 213
+  },
+  {
+    "__docId__": 174,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe44",
+    "testId": 44,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe41",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe41.describe44",
+    "access": null,
+    "description": "without runscope",
+    "lineNumber": 217
+  },
+  {
+    "__docId__": 175,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it45",
+    "testId": 45,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe41.describe44",
+    "testDepth": 5,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe35.describe36.describe41.describe44.it45",
+    "access": null,
+    "description": "should return standard url",
+    "lineNumber": 228
+  },
+  {
+    "__docId__": 176,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe46",
+    "testId": 46,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18",
+    "testDepth": 1,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe46",
+    "access": null,
+    "description": "setup",
+    "lineNumber": 235
+  },
+  {
+    "__docId__": 177,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe47",
+    "testId": 47,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe46",
+    "testDepth": 2,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe46.describe47",
+    "access": null,
+    "description": "generating defaults",
+    "lineNumber": 236
+  },
+  {
+    "__docId__": 178,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe48",
+    "testId": 48,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe46.describe47",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe46.describe47.describe48",
+    "access": null,
+    "description": "Private connector",
+    "lineNumber": 237
+  },
+  {
+    "__docId__": 179,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it49",
+    "testId": 49,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe46.describe47.describe48",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe46.describe47.describe48.it49",
+    "access": null,
+    "description": "returns a public key",
+    "lineNumber": 246
+  },
+  {
+    "__docId__": 180,
+    "kind": "testDescribe",
+    "static": true,
+    "variation": null,
+    "name": "describe50",
+    "testId": 50,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe46.describe47",
+    "testDepth": 3,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe46.describe47.describe50",
+    "access": null,
+    "description": "Public connector",
+    "lineNumber": 251
+  },
+  {
+    "__docId__": 181,
+    "kind": "testIt",
+    "static": true,
+    "variation": null,
+    "name": "it51",
+    "testId": 51,
+    "memberof": "tests/unit_tests/connector_tests.js~describe18.describe46.describe47.describe50",
+    "testDepth": 4,
+    "longname": "tests/unit_tests/connector_tests.js~describe18.describe46.describe47.describe50.it51",
+    "access": null,
+    "description": "returns an empty object",
+    "lineNumber": 260
+  },
+  {
+    "__docId__": 182,
+    "kind": "testFile",
+    "static": true,
+    "variation": null,
+    "name": "tests/unit_tests/poll_tests.js",
+    "memberof": null,
+    "longname": "tests/unit_tests/poll_tests.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 0,
+    "content": ""
+  }
+]

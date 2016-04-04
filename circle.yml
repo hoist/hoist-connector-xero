@@ -20,7 +20,7 @@ dependencies:
   override:
     - echo ${DOCKER_CONFIG} > .dockercfg
     - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-    - docker pull hoist/connector-xero:${CIRCLE_BRANCH//feature\//}
+    - docker pull hoist/connector-xero:${CIRCLE_BRANCH//feature\//}; true;
     - docker build -t hoist/connector-xero:${CIRCLE_BRANCH//feature\//} .
 test:
   override:
